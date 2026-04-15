@@ -30,7 +30,8 @@ import {
   getActivityOptions,
   getDeliverableOptions 
 } from '@/lib/peo-constants';
-import type { Activity, Deliverable, GrupTintaEntry, Expert } from '@/lib/types';
+import { useActivityCatalog } from '@/hooks/use-supabase-data';
+import type { Activity, Deliverable, GrupTintaEntry, Expert, ActivityCatalog } from '@/lib/types';
 
 interface ActivityFormProps {
   selectedDates: string[];
@@ -57,15 +58,40 @@ export function ActivityForm({
   isSaving = false,
   apiKey = null,
 }: ActivityFormProps) {
-  // Get expert's assigned SA codes
-  const expertSaCodes = expert?.saCodes || ['SA3.2', 'SA3.4', 'SA3.5'];
+  // Fetch activity catalog from database
+  const { catalog, isLoading: catalogLoading } = useActivityCatalog();
+  
+  // Get expert's assigned SA codes and category
+  const expertSaCodes = expert?.saCodes || [];
   const expertCategory = expert?.category || 'ap';
+  
+  // Filter catalog by expert's category and SA codes
+  const filteredCatalog = useMemo(() => {
+    if (!catalog || catalog.length === 0) return [];
+    return catalog.filter(item => 
+      item.category === expertCategory && 
+      (expertSaCodes.length === 0 || expertSaCodes.includes(item.saCode))
+    );
+  }, [catalog, expertCategory, expertSaCodes]);
+  
+  // Get unique SA codes available for this expert from the catalog
+  const availableSaCodes = useMemo(() => {
+    const saCodes = [...new Set(filteredCatalog.map(item => item.saCode))];
+    return saCodes.sort();
+  }, [filteredCatalog]);
   
   const expertNorma = expert?.norma || 8;
   // Default hours = min(norma, 8) - experts usually fill their daily norm
   const defaultHours = Math.min(expertNorma, 8);
   const [hours, setHours] = useState(initialActivity?.hours?.toString() || defaultHours.toString());
-  const [saCode, setSaCode] = useState(initialActivity?.saCode || expertSaCodes[0] || 'SA3.2');
+  const [saCode, setSaCode] = useState(initialActivity?.saCode || '');
+  
+  // Set default SA code when available SA codes load
+  useEffect(() => {
+    if (!saCode && availableSaCodes.length > 0) {
+      setSaCode(availableSaCodes[0]);
+    }
+  }, [saCode, availableSaCodes]);
   const [activityTitle, setActivityTitle] = useState(initialActivity?.activityType || '');
   const [dayType, setDayType] = useState<'lucratoare' | 'CO' | 'CM'>(
     (initialActivity?.dayType as 'lucratoare' | 'CO' | 'CM') || 'lucratoare'
@@ -114,10 +140,21 @@ export function ActivityForm({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Get available activities for selected SA
+  // Get available activities for selected SA from catalog
   const availableActivities = useMemo(() => {
-    return ACTS[saCode] || [];
-  }, [saCode]);
+    if (!saCode || filteredCatalog.length === 0) return [];
+    return filteredCatalog
+      .filter(item => item.saCode === saCode)
+      .map(item => item.activityName);
+  }, [saCode, filteredCatalog]);
+  
+  // Get full activity catalog item for selected activity
+  const selectedCatalogItem = useMemo(() => {
+    if (!activityTitle || !saCode) return null;
+    return filteredCatalog.find(item => 
+      item.saCode === saCode && item.activityName === activityTitle
+    ) || null;
+  }, [activityTitle, saCode, filteredCatalog]);
   
   // Get deliverable options for expert category
   const deliverableOptions = useMemo(() => {
@@ -361,17 +398,26 @@ export function ActivityForm({
             {/* Sub-activity and Activity */}
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <FieldLabel htmlFor="saCode">Subactivitate</FieldLabel>
-                <Select value={saCode} onValueChange={setSaCode}>
+                <FieldLabel htmlFor="saCode">Subactivitate ({expert?.category?.toUpperCase() || 'AP'})</FieldLabel>
+                <Select value={saCode} onValueChange={setSaCode} disabled={catalogLoading}>
                   <SelectTrigger id="saCode">
-                    <SelectValue placeholder="Selectează SA" />
+                    <SelectValue placeholder={catalogLoading ? "Se incarca..." : "Selecteaza SA"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {expertSaCodes.map((sa) => (
-                      <SelectItem key={sa} value={sa}>{sa}</SelectItem>
-                    ))}
+                    {availableSaCodes.length === 0 ? (
+                      <SelectItem value="" disabled>Nicio subactivitate disponibila</SelectItem>
+                    ) : (
+                      availableSaCodes.map((sa) => (
+                        <SelectItem key={sa} value={sa}>{sa}</SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {availableSaCodes.length === 0 && !catalogLoading && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Nu exista subactivitati in catalog pentru categoria {expertCategory}
+                  </p>
+                )}
               </Field>
 
               <Field>
@@ -413,16 +459,25 @@ export function ActivityForm({
                   </Button>
                 )}
               </div>
-              <Select value={activityTitle} onValueChange={setActivityTitle}>
+              <Select value={activityTitle} onValueChange={setActivityTitle} disabled={!saCode || availableActivities.length === 0}>
                 <SelectTrigger id="activity">
-                  <SelectValue placeholder="— Selecteaza —" />
+                  <SelectValue placeholder={!saCode ? "Selecteaza SA mai intai" : "— Selecteaza activitatea —"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableActivities.map((act) => (
-                    <SelectItem key={act} value={act}>{act}</SelectItem>
-                  ))}
+                  {availableActivities.length === 0 ? (
+                    <SelectItem value="" disabled>Nicio activitate pentru acest SA</SelectItem>
+                  ) : (
+                    availableActivities.map((act) => (
+                      <SelectItem key={act} value={act}>{act}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
+              {selectedCatalogItem && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {selectedCatalogItem.serviceCategory} - {selectedCatalogItem.description}
+                </p>
+              )}
               {titleVerificationResult && (
                 <p className="text-sm text-muted-foreground mt-1 p-2 bg-muted rounded">
                   {titleVerificationResult}
