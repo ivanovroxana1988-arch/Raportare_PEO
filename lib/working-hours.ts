@@ -232,6 +232,28 @@ export function getMonthNameRomanian(month: number): string {
 }
 
 /**
+ * Get working hours info for a month (used by calendar)
+ */
+export interface WorkingHoursInfo {
+  workingDays: number;
+  maxHoursFullTime: number;
+  maxHoursWithNorma: number;
+  holidays: Date[];
+}
+
+export function getWorkingHoursInfo(year: number, month: number, norma: number = 8): WorkingHoursInfo {
+  const workingDays = getWorkingDaysInMonth(month + 1, year); // month is 0-indexed from calendar
+  const holidays = getRomanianHolidays(year).filter(h => h.getMonth() === month);
+  
+  return {
+    workingDays,
+    maxHoursFullTime: workingDays * 8,
+    maxHoursWithNorma: workingDays * norma,
+    holidays,
+  };
+}
+
+/**
  * Calculate hours summary for an expert in a month
  */
 export interface MonthlyHoursSummary {
