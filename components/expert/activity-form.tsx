@@ -61,9 +61,6 @@ export function ActivityForm({
   // Fetch activity catalog from database
   const { catalog, isLoading: catalogLoading } = useActivityCatalog();
   
-  console.log('[v0] ActivityForm rendering - catalog:', catalog?.length, 'loading:', catalogLoading);
-  console.log('[v0] Expert:', expert?.name, 'saCodes:', expert?.saCodes);
-  
   // Get expert's assigned SA codes (based on their role)
   const expertSaCodes = expert?.saCodes || [];
   
@@ -345,7 +342,7 @@ export function ActivityForm({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
-          {initialActivity ? 'Editare Activitate' : 'Adăugare Activitate'}
+          {initialActivity ? 'Editare Activitate' : 'Adaugare Activitate'}
         </CardTitle>
         {selectedDates.length > 0 && (
           <p className="text-sm text-muted-foreground">
@@ -366,8 +363,8 @@ export function ActivityForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="lucratoare">Lucratoare</SelectItem>
-                <SelectItem value="CO">CO — Concediu odihna</SelectItem>
-                <SelectItem value="CM">CM — Concediu medical</SelectItem>
+                <SelectItem value="CO">CO - Concediu odihna</SelectItem>
+                <SelectItem value="CM">CM - Concediu medical</SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -377,14 +374,14 @@ export function ActivityForm({
               <FieldLabel htmlFor="hours">Ore lucrate (max 8h/zi, norma {expertNorma}h)</FieldLabel>
               <Select value={hours} onValueChange={setHours}>
                 <SelectTrigger id="hours">
-                  <SelectValue placeholder="Selectează orele" />
+                  <SelectValue placeholder="Selecteaza orele" />
                 </SelectTrigger>
                 <SelectContent>
                   {Array.from({ length: 16 }, (_, i) => (i + 1) * 0.5)
                     .filter(h => h <= 8)
                     .map(h => (
                       <SelectItem key={h} value={h.toString()}>
-                        {h} {h === 1 ? 'oră' : 'ore'}
+                        {h} {h === 1 ? 'ora' : 'ore'}
                       </SelectItem>
                     ))
                   }
@@ -422,10 +419,10 @@ export function ActivityForm({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="location">Locație</FieldLabel>
+                <FieldLabel htmlFor="location">Locatie</FieldLabel>
                 <Select value={location} onValueChange={setLocation}>
                   <SelectTrigger id="location">
-                    <SelectValue placeholder="Selectează locația" />
+                    <SelectValue placeholder="Selecteaza locatia" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Birou">Birou</SelectItem>
@@ -455,7 +452,7 @@ export function ActivityForm({
                         Verificare...
                       </>
                     ) : (
-                      'Verifică cu AI'
+                      'Verifica cu AI'
                     )}
                   </Button>
                 )}
@@ -490,9 +487,9 @@ export function ActivityForm({
             <Field>
               <FieldLabel htmlFor="description">
                 {isException 
-                  ? 'Descriere (obligatorie — min 15 caractere)' 
+                  ? 'Descriere (obligatorie - min 15 caractere)' 
                   : activityCommon 
-                    ? 'Descriere contribuție individuală (obligatorie — min 30 caractere)'
+                    ? 'Descriere contributie individuala (obligatorie - min 30 caractere)'
                     : 'Descriere activitate'
                 }
               </FieldLabel>
@@ -501,7 +498,7 @@ export function ActivityForm({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={activityCommon 
-                  ? "Descrie specific ce AI realizat TU în această activitate comună (persoana I, contribuție specifică)..." 
+                  ? "Descrie specific ce AI realizat TU in aceasta activitate comuna (persoana I, contributie specifica)..." 
                   : "Ce anume ai realizat..."}
                 rows={4}
                 className={needsCommonDesc ? 'border-amber-500' : ''}
@@ -513,8 +510,8 @@ export function ActivityForm({
               )}
               {needsCommonDesc && (
                 <div className="text-xs text-amber-700 mt-1 p-2 bg-amber-50 rounded">
-                  Activitate comună — descriere obligatorie min. 30 caractere ({(description || '').trim().length}/30). 
-                  Specifică contribuția ta individuală.
+                  Activitate comuna - descriere obligatorie min. 30 caractere ({(description || '').trim().length}/30). 
+                  Specifica contributia ta individuala.
                 </div>
               )}
             </Field>
@@ -522,7 +519,7 @@ export function ActivityForm({
             {/* Event duration (for event activities) */}
             {isEvent && (
               <Field>
-                <FieldLabel>Durata evenimentului (ore) — opțional</FieldLabel>
+                <FieldLabel>Durata evenimentului (ore) - optional</FieldLabel>
                 <div className="flex items-center gap-4">
                   <Input
                     type="number"
@@ -536,27 +533,27 @@ export function ActivityForm({
                   />
                   {eventDur > 0 && totalHours > eventDur && (
                     <span className="text-xs text-amber-700">
-                      Ai pontat {totalHours}h dar evenimentul a durat {eventDur}h — explică orele suplimentare
+                      Ai pontat {totalHours}h dar evenimentul a durat {eventDur}h - explica orele suplimentare
                     </span>
                   )}
                   {eventDur > 0 && totalHours <= eventDur && (
                     <span className="text-xs text-green-700 flex items-center gap-1">
                       <CheckCircle className="h-3 w-3" />
-                      Ore pontate ({totalHours}h) ≤ durata evenimentului ({eventDur}h)
+                      Ore pontate ({totalHours}h) = durata evenimentului ({eventDur}h)
                     </span>
                   )}
                 </div>
                 {needsExtendedDesc && (
                   <div className="mt-2">
-                    <Label className="text-xs text-amber-700">Activități conexe evenimentului — obligatoriu</Label>
+                    <Label className="text-xs text-amber-700">Activitati conexe evenimentului - obligatoriu</Label>
                     <div className="text-xs text-amber-600 mb-2">
-                      Ai pontat mai multe ore decât durata evenimentului. Descrie ce ai realizat în orele suplimentare.
+                      Ai pontat mai multe ore decat durata evenimentului. Descrie ce ai realizat in orele suplimentare.
                     </div>
                     <Textarea
                       value={eventExtendedDesc}
                       onChange={(e) => setEventExtendedDesc(e.target.value)}
                       rows={3}
-                      placeholder="Ex: 1h pregătire materiale de prezentare înainte de eveniment, 1h redactare minuta și sinteză concluzii după eveniment..."
+                      placeholder="Ex: 1h pregatire materiale de prezentare inainte de eveniment, 1h redactare minuta si sinteza concluzii dupa eveniment..."
                       className="border-amber-500"
                     />
                   </div>
@@ -576,7 +573,7 @@ export function ActivityForm({
                         Livrabile principale
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Outputurile directe ale activitații — obligatorii
+                        Outputurile directe ale activitatii - obligatorii
                       </div>
                     </div>
                     <Button
@@ -586,13 +583,13 @@ export function ActivityForm({
                       onClick={() => addDeliverableSlot('livrabil')}
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Adaugă livrabil
+                      Adauga livrabil
                     </Button>
                   </div>
 
                   {mainDeliverables.length === 0 && (
                     <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-md">
-                      Niciun livrabil. Apasă + pentru a adăuga outputul activității.
+                      Niciun livrabil. Apasa + pentru a adauga outputul activitatii.
                     </div>
                   )}
 
@@ -639,13 +636,13 @@ export function ActivityForm({
                         htmlFor="activityCommon"
                         className="text-sm text-blue-800 cursor-pointer"
                       >
-                        Activitate desfășurată în comun cu alți experți
+                        Activitate desfasurata in comun cu alti experti
                       </label>
                     </div>
 
                     {activityCommon && (
                       <div>
-                        <Label className="text-xs text-blue-700">Experți implicați în această activitate</Label>
+                        <Label className="text-xs text-blue-700">Experti implicati in aceasta activitate</Label>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {allExperts.filter(ex => ex.id !== expertId).map(ex => (
                             <label
@@ -678,10 +675,10 @@ export function ActivityForm({
                     {mainDeliverables.length > 0 && activityCommon && (
                       <div>
                         <div className="text-xs font-medium text-blue-700 mb-2">
-                          Marchează livrabilele comune
+                          Marcheaza livrabilele comune
                         </div>
                         <div className="text-xs text-blue-600 mb-2">
-                          Un singur expert îl încarcă, ceilalți confirmă.
+                          Un singur expert il incarca, ceilalti confirma.
                         </div>
                         <div className="space-y-1">
                           {mainDeliverables.map(d => (
@@ -717,10 +714,10 @@ export function ActivityForm({
                       <div className="text-sm font-medium text-purple-800 flex items-center gap-2">
                         <FileText className="h-4 w-4" />
                         Raport preliminar / descriptiv
-                        <Badge variant="outline" className="text-[10px] text-purple-600">opțional</Badge>
+                        <Badge variant="outline" className="text-[10px] text-purple-600">optional</Badge>
                       </div>
                       <div className="text-xs text-purple-600">
-                        Context detaliat al activității (ex: raport de aliniere, nota internă)
+                        Context detaliat al activitatii (ex: raport de aliniere, nota interna)
                       </div>
                     </div>
                     <Button
@@ -731,7 +728,7 @@ export function ActivityForm({
                       className="border-purple-300 text-purple-700"
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Adaugă raport
+                      Adauga raport
                     </Button>
                   </div>
                   <div className="space-y-3">
@@ -757,10 +754,10 @@ export function ActivityForm({
                       <div className="text-sm font-medium text-amber-800 flex items-center gap-2">
                         <FileText className="h-4 w-4" />
                         Alte documente justificative
-                        <Badge variant="outline" className="text-[10px] text-amber-600">opțional</Badge>
+                        <Badge variant="outline" className="text-[10px] text-amber-600">optional</Badge>
                       </div>
                       <div className="text-xs text-amber-600">
-                        Agende, invitații, corespondență, documente suport suplimentare
+                        Agende, invitatii, corespondenta, documente suport suplimentare
                       </div>
                     </div>
                     <Button
@@ -771,7 +768,7 @@ export function ActivityForm({
                       className="border-amber-300 text-amber-700"
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Adaugă
+                      Adauga
                     </Button>
                   </div>
                   {justifDeliverables.length > 0 && (
@@ -812,7 +809,7 @@ export function ActivityForm({
             {saCode === 'SA1.1' && (
               <div className="space-y-3 bg-teal-50 rounded-lg p-4 border border-teal-200">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium text-teal-800">Grup Țintă</div>
+                  <div className="text-sm font-medium text-teal-800">Grup Tinta</div>
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -821,7 +818,7 @@ export function ActivityForm({
                     className="border-teal-300 text-teal-700"
                   >
                     <Plus className="h-4 w-4 mr-1" />
-                    Adaugă intrare GT
+                    Adauga intrare GT
                   </Button>
                 </div>
 
@@ -830,13 +827,13 @@ export function ActivityForm({
                     {grupTinta.map((entry) => (
                       <div key={entry.id} className="flex items-center gap-2 p-2 bg-white rounded-md border border-teal-200">
                         <Input
-                          placeholder="Organizații"
+                          placeholder="Organizatii"
                           value={entry.organizations?.join(', ') || ''}
                           onChange={(e) => updateGrupTintaEntry(entry.id, 'organizations', e.target.value.split(',').map(s => s.trim()))}
                           className="flex-1"
                         />
                         <Input
-                          placeholder="Nr. participanți"
+                          placeholder="Nr. participanti"
                           type="number"
                           value={entry.participantsCount || ''}
                           onChange={(e) => updateGrupTintaEntry(entry.id, 'participantsCount', parseInt(e.target.value) || 0)}
@@ -864,7 +861,7 @@ export function ActivityForm({
           <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
             <span className="text-sm text-amber-800">
-              Activitatea necesită cel puțin un livrabil principal.
+              Activitatea necesita cel putin un livrabil principal.
             </span>
           </div>
         )}
@@ -872,7 +869,7 @@ export function ActivityForm({
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Anulează
+            Anuleaza
           </Button>
           <Button 
             type="button" 
@@ -888,9 +885,9 @@ export function ActivityForm({
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Se salvează...
+                Se salveaza...
               </>
-            ) : initialActivity ? 'Salvează modificările' : 'Adaugă activitate'}
+            ) : initialActivity ? 'Salveaza modificarile' : 'Adauga activitate'}
           </Button>
         </div>
       </CardContent>
