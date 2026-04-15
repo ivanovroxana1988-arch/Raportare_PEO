@@ -85,7 +85,9 @@ export default function ExpertDashboard() {
 
   // Get selected expert
   const selectedExpert = useMemo(() => {
-    return experts.find((e) => e.id === selectedExpertId) || experts[0] || { id: '', name: 'Expert', role: '' };
+    const expert = experts.find((e) => e.id === selectedExpertId) || experts[0];
+    console.log('[v0] Selected expert:', expert?.name, 'saCodes:', expert?.saCodes);
+    return expert || { id: '', name: 'Expert', role: '', norma: 8, saCodes: [] };
   }, [experts, selectedExpertId]);
 
   // Filter activities by expert
