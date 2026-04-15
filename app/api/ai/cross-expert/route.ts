@@ -4,8 +4,37 @@ import { z } from 'zod';
 
 export async function POST(req: Request) {
   try {
-    const { files } = await req.json();
+    const body = await req.json();
+    const { files, activities, month, year } = body;
 
+    // New format: text-based analysis with activities array
+    if (activities && activities.length > 0) {
+      const activitiesText = activities.map((a: { expertName: string; date: string; activityType: string; title: string; hours: number; description?: string }) => 
+        `- ${a.expertName} | ${a.date} | ${a.activityType || 'N/A'} | ${a.title || 'Fără titlu'} | ${a.hours}h`
+      ).join('\n');
+
+      const result = await generateText({
+        model: 'openai/gpt-4o-mini',
+        system: `Ești un expert în analiza și verificarea rapoartelor de activitate pentru proiecte cu finanțare europeană (PEO).
+Analizează activitățile mai multor experți și identifică:
+1. Suprapuneri suspecte (activități similare pe aceleași date)
+2. Posibile dublări de efort
+3. Inconsistențe în raportare
+4. Potențiale probleme de conformitate
+
+Răspunde în limba română, concis și organizat.
+Dacă nu găsești probleme, menționează că totul pare în regulă.`,
+        prompt: `Analizează activitățile din ${month} ${year}:
+
+${activitiesText}
+
+Identifică potențiale probleme de suprapunere sau dublare între experți.`,
+      });
+
+      return NextResponse.json({ analysis: result.text });
+    }
+
+    // Legacy format: file-based comparison
     if (!files || files.length < 2) {
       return NextResponse.json(
         { error: 'Sunt necesare cel puțin 2 rapoarte pentru comparare' },
@@ -71,7 +100,10 @@ isPotentialIssue este true dacă similarity > 70%.`,
   } catch (error) {
     console.error('Error in cross-expert analysis:', error);
     return NextResponse.json(
-      { error: 'Eroare la analiza cross-expert' },
+      { 
+        error: 'Eroare la analiza cross-expert',
+        analysis: 'Eroare la analiza cross-expert: ' + (error instanceof Error ? error.message : 'Unknown error'),
+      },
       { status: 500 }
     );
   }

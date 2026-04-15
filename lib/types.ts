@@ -37,9 +37,14 @@ export interface Deliverable {
 
 export interface GrupTintaEntry {
   id: string;
-  name: string;
-  cnp?: string;
+  expertId: string;
   date: string;
+  type: string;
+  organizations: string[];
+  participants: number;
+  notes: string;
+  month: number;
+  year: number;
 }
 
 export interface VerificationData {
