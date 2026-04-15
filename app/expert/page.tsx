@@ -157,6 +157,17 @@ export default function ExpertDashboard() {
     setShowForm(true);
   };
 
+  // Auto-open form when dates are selected
+  const handleSelectDates = (dates: string[]) => {
+    setSelectedDates(dates);
+    if (dates.length > 0) {
+      setEditingActivity(null);
+      setShowForm(true);
+    } else {
+      setShowForm(false);
+    }
+  };
+
   const isLoading = expertsLoading || activitiesLoading || apiKeyLoading;
 
   if (isLoading && experts.length === 0) {
@@ -261,20 +272,13 @@ export default function ExpertDashboard() {
               <div className="lg:col-span-1">
                 <MultiSelectCalendar
                   selectedDates={selectedDates}
-                  onSelectDates={setSelectedDates}
+                  onSelectDates={handleSelectDates}
                   activities={activities}
                   onMonthChange={handleMonthChange}
                   expertNorma={selectedExpert.norma || 8}
                 />
 
-                {selectedDates.length > 0 && !showForm && (
-                  <div className="mt-4">
-                    <Button onClick={handleAddActivity} className="w-full">
-                      Adauga activitate pentru {selectedDates.length}{' '}
-                      {selectedDates.length === 1 ? 'zi' : 'zile'}
-                    </Button>
-                  </div>
-                )}
+                {/* Form opens automatically when dates are selected */}
               </div>
 
               {/* Form / Table Section */}
