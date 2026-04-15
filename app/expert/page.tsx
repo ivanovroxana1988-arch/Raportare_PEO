@@ -85,7 +85,8 @@ export default function ExpertDashboard() {
 
   // Get selected expert
   const selectedExpert = useMemo(() => {
-    return experts.find((e) => e.id === selectedExpertId) || experts[0] || { id: '', name: 'Expert', role: '' };
+    const expert = experts.find((e) => e.id === selectedExpertId) || experts[0];
+    return expert || { id: '', name: 'Expert', role: '', norma: 8, saCodes: [] };
   }, [experts, selectedExpertId]);
 
   // Filter activities by expert
@@ -154,6 +155,17 @@ export default function ExpertDashboard() {
     if (selectedDates.length === 0) return;
     setEditingActivity(null);
     setShowForm(true);
+  };
+
+  // Auto-open form when dates are selected
+  const handleSelectDates = (dates: string[]) => {
+    setSelectedDates(dates);
+    if (dates.length > 0) {
+      setEditingActivity(null);
+      setShowForm(true);
+    } else {
+      setShowForm(false);
+    }
   };
 
   const isLoading = expertsLoading || activitiesLoading || apiKeyLoading;
@@ -260,20 +272,13 @@ export default function ExpertDashboard() {
               <div className="lg:col-span-1">
                 <MultiSelectCalendar
                   selectedDates={selectedDates}
-                  onSelectDates={setSelectedDates}
+                  onSelectDates={handleSelectDates}
                   activities={activities}
                   onMonthChange={handleMonthChange}
                   expertNorma={selectedExpert.norma || 8}
                 />
 
-                {selectedDates.length > 0 && !showForm && (
-                  <div className="mt-4">
-                    <Button onClick={handleAddActivity} className="w-full">
-                      Adauga activitate pentru {selectedDates.length}{' '}
-                      {selectedDates.length === 1 ? 'zi' : 'zile'}
-                    </Button>
-                  </div>
-                )}
+                {/* Form opens automatically when dates are selected */}
               </div>
 
               {/* Form / Table Section */}

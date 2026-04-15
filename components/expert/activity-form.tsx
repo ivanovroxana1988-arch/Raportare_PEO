@@ -67,9 +67,7 @@ export function ActivityForm({
   // Filter catalog by expert's SA codes only (SA codes are role-based, not category-based)
   const filteredCatalog = useMemo(() => {
     if (!catalog || catalog.length === 0) return [];
-    // If expert has no SA codes assigned, show nothing (should not happen)
     if (expertSaCodes.length === 0) return [];
-    // Filter to only activities where the SA code matches expert's assigned SAs
     return catalog.filter(item => expertSaCodes.includes(item.saCode));
   }, [catalog, expertSaCodes]);
   
@@ -404,7 +402,7 @@ export function ActivityForm({
                   </SelectTrigger>
                   <SelectContent>
                     {availableSaCodes.length === 0 ? (
-                      <SelectItem value="" disabled>Nicio subactivitate disponibila</SelectItem>
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Nicio subactivitate disponibila</div>
                     ) : (
                       availableSaCodes.map((sa) => (
                         <SelectItem key={sa} value={sa}>{sa}</SelectItem>
@@ -464,7 +462,7 @@ export function ActivityForm({
                 </SelectTrigger>
                 <SelectContent>
                   {availableActivities.length === 0 ? (
-                    <SelectItem value="" disabled>Nicio activitate pentru acest SA</SelectItem>
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">Nicio activitate pentru acest SA</div>
                   ) : (
                     availableActivities.map((act) => (
                       <SelectItem key={act} value={act}>{act}</SelectItem>
