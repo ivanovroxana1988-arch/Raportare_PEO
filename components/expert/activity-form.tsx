@@ -62,7 +62,9 @@ export function ActivityForm({
   const expertCategory = expert?.category || 'ap';
   
   const expertNorma = expert?.norma || 8;
-  const [hours, setHours] = useState(initialActivity?.hours?.toString() || expertNorma.toString());
+  // Default hours = min(norma, 8) - experts usually fill their daily norm
+  const defaultHours = Math.min(expertNorma, 8);
+  const [hours, setHours] = useState(initialActivity?.hours?.toString() || defaultHours.toString());
   const [saCode, setSaCode] = useState(initialActivity?.saCode || expertSaCodes[0] || 'SA3.2');
   const [activityTitle, setActivityTitle] = useState(initialActivity?.activityType || '');
   const [dayType, setDayType] = useState<'lucratoare' | 'CO' | 'CM'>(
@@ -334,14 +336,14 @@ export function ActivityForm({
 
           {!isLeave && (
             <Field>
-              <FieldLabel htmlFor="hours">Ore lucrate (max {expertNorma}h/zi)</FieldLabel>
+              <FieldLabel htmlFor="hours">Ore lucrate (max 8h/zi, norma {expertNorma}h)</FieldLabel>
               <Select value={hours} onValueChange={setHours}>
                 <SelectTrigger id="hours">
                   <SelectValue placeholder="Selectează orele" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: expertNorma * 2 }, (_, i) => (i + 1) * 0.5)
-                    .filter(h => h <= expertNorma)
+                  {Array.from({ length: 16 }, (_, i) => (i + 1) * 0.5)
+                    .filter(h => h <= 8)
                     .map(h => (
                       <SelectItem key={h} value={h.toString()}>
                         {h} {h === 1 ? 'oră' : 'ore'}
