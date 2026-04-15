@@ -86,7 +86,6 @@ export default function ExpertDashboard() {
   // Get selected expert
   const selectedExpert = useMemo(() => {
     const expert = experts.find((e) => e.id === selectedExpertId) || experts[0];
-    console.log('[v0] Selected expert:', expert?.name, 'saCodes:', expert?.saCodes);
     return expert || { id: '', name: 'Expert', role: '', norma: 8, saCodes: [] };
   }, [experts, selectedExpertId]);
 

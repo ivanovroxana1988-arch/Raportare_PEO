@@ -64,31 +64,16 @@ export function ActivityForm({
   // Get expert's assigned SA codes (based on their role)
   const expertSaCodes = expert?.saCodes || [];
   
-  // Debug logs
-  console.log('[v0] ActivityForm - expert:', expert?.name, 'saCodes:', expertSaCodes);
-  console.log('[v0] ActivityForm - catalog loaded:', catalog?.length, 'loading:', catalogLoading);
-  
   // Filter catalog by expert's SA codes only (SA codes are role-based, not category-based)
   const filteredCatalog = useMemo(() => {
-    if (!catalog || catalog.length === 0) {
-      console.log('[v0] No catalog data');
-      return [];
-    }
-    // If expert has no SA codes assigned, show nothing (should not happen)
-    if (expertSaCodes.length === 0) {
-      console.log('[v0] Expert has no SA codes assigned');
-      return [];
-    }
-    // Filter to only activities where the SA code matches expert's assigned SAs
-    const filtered = catalog.filter(item => expertSaCodes.includes(item.saCode));
-    console.log('[v0] Filtered catalog:', filtered.length, 'items for SAs:', expertSaCodes);
-    return filtered;
+    if (!catalog || catalog.length === 0) return [];
+    if (expertSaCodes.length === 0) return [];
+    return catalog.filter(item => expertSaCodes.includes(item.saCode));
   }, [catalog, expertSaCodes]);
   
   // Get unique SA codes available for this expert from the catalog
   const availableSaCodes = useMemo(() => {
     const saCodes = [...new Set(filteredCatalog.map(item => item.saCode))];
-    console.log('[v0] Available SA codes:', saCodes);
     return saCodes.sort();
   }, [filteredCatalog]);
   
@@ -417,7 +402,7 @@ export function ActivityForm({
                   </SelectTrigger>
                   <SelectContent>
                     {availableSaCodes.length === 0 ? (
-                      <SelectItem value="" disabled>Nicio subactivitate disponibila</SelectItem>
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Nicio subactivitate disponibila</div>
                     ) : (
                       availableSaCodes.map((sa) => (
                         <SelectItem key={sa} value={sa}>{sa}</SelectItem>
@@ -477,7 +462,7 @@ export function ActivityForm({
                 </SelectTrigger>
                 <SelectContent>
                   {availableActivities.length === 0 ? (
-                    <SelectItem value="" disabled>Nicio activitate pentru acest SA</SelectItem>
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">Nicio activitate pentru acest SA</div>
                   ) : (
                     availableActivities.map((act) => (
                       <SelectItem key={act} value={act}>{act}</SelectItem>
