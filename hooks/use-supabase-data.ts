@@ -9,8 +9,13 @@ import {
   notesService,
   settingsService,
   isSupabaseAvailable,
+  activityCatalogService,
+  workingGroupsService,
+  concurrentProjectsService,
+  reportStatusService,
+  grupTintaService,
 } from '@/lib/supabase-store';
-import type { Activity, Expert, VerificationData, Neconformitate, VerificationNote, AppSettings } from '@/lib/types';
+import type { Activity, Expert, VerificationData, Neconformitate, VerificationNote, AppSettings, ActivityCatalog, WorkingGroup, ConcurrentProject, ReportStatus, GrupTintaEntry } from '@/lib/types';
 
 // Safe fetcher that returns null if Supabase is not available
 const safeFetcher = <T>(fetcher: () => Promise<T>) => async (): Promise<T | null> => {
@@ -340,4 +345,179 @@ export function useSettingsMutations() {
   };
 
   return { save, setApiKey };
+}
+
+// ============================================
+// ACTIVITY CATALOG HOOKS
+// ============================================
+
+export function useActivityCatalog() {
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? 'activity-catalog' : null,
+    safeFetcher(activityCatalogService.getAll)
+  );
+  
+  return {
+    catalog: data || [],
+    isLoading,
+    error,
+  };
+}
+
+export function useActivityCatalogBySa(saCode: string | null) {
+  const { data, error, isLoading } = useSWR(
+    saCode && isSupabaseAvailable() ? `activity-catalog-${saCode}` : null,
+    safeFetcher(() => activityCatalogService.getBySaCode(saCode!))
+  );
+  
+  return {
+    activities: data || [],
+    isLoading,
+    error,
+  };
+}
+
+// ============================================
+// WORKING GROUPS HOOKS
+// ============================================
+
+export function useWorkingGroups() {
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? 'working-groups' : null,
+    safeFetcher(workingGroupsService.getAll)
+  );
+  
+  return {
+    groups: data || [],
+    isLoading,
+    error,
+  };
+}
+
+export function useWorkingGroupsByType(type: string | null) {
+  const { data, error, isLoading } = useSWR(
+    type && isSupabaseAvailable() ? `working-groups-${type}` : null,
+    safeFetcher(() => workingGroupsService.getByType(type!))
+  );
+  
+  return {
+    groups: data || [],
+    isLoading,
+    error,
+  };
+}
+
+// ============================================
+// CONCURRENT PROJECTS HOOKS
+// ============================================
+
+export function useConcurrentProjects(expertId: string | null) {
+  const key = expertId ? `concurrent-projects-${expertId}` : null;
+  const { data, error, isLoading } = useSWR(
+    key && isSupabaseAvailable() ? key : null,
+    safeFetcher(() => concurrentProjectsService.getByExpert(expertId!))
+  );
+  
+  const addProject = async (project: Omit<ConcurrentProject, 'id'>) => {
+    await concurrentProjectsService.create(project);
+    mutate(key);
+  };
+  
+  const removeProject = async (id: string) => {
+    await concurrentProjectsService.delete(id);
+    mutate(key);
+  };
+  
+  return {
+    projects: data || [],
+    isLoading,
+    error,
+    addProject,
+    removeProject,
+  };
+}
+
+// ============================================
+// REPORT STATUS HOOKS
+// ============================================
+
+export function useReportStatus(expertId: string | null, month: number, year: number) {
+  const key = expertId ? `report-status-${expertId}-${month}-${year}` : null;
+  const { data, error, isLoading } = useSWR(
+    key && isSupabaseAvailable() ? key : null,
+    safeFetcher(() => reportStatusService.getByExpertAndMonth(expertId!, month, year))
+  );
+  
+  const updateStatus = async (status: Omit<ReportStatus, 'id'>) => {
+    await reportStatusService.upsert(status);
+    mutate(key);
+    mutate(`report-status-month-${month}-${year}`);
+  };
+  
+  return {
+    status: data,
+    isLoading,
+    error,
+    updateStatus,
+  };
+}
+
+export function useReportStatusByMonth(month: number, year: number) {
+  const key = `report-status-month-${month}-${year}`;
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? key : null,
+    safeFetcher(() => reportStatusService.getAllByMonth(month, year))
+  );
+  
+  return {
+    statuses: data || [],
+    isLoading,
+    error,
+  };
+}
+
+// ============================================
+// GRUP TINTA HOOKS
+// ============================================
+
+export function useGrupTinta(expertId: string | null, month: number, year: number) {
+  const key = expertId ? `grup-tinta-${expertId}-${month}-${year}` : null;
+  const { data, error, isLoading } = useSWR(
+    key && isSupabaseAvailable() ? key : null,
+    safeFetcher(() => grupTintaService.getByExpertAndMonth(expertId!, month, year))
+  );
+  
+  const addEntry = async (entry: Omit<GrupTintaEntry, 'id'>) => {
+    await grupTintaService.create(entry);
+    mutate(key);
+    mutate(`grup-tinta-stats-${month}-${year}`);
+  };
+  
+  const removeEntry = async (id: string) => {
+    await grupTintaService.delete(id);
+    mutate(key);
+    mutate(`grup-tinta-stats-${month}-${year}`);
+  };
+  
+  return {
+    entries: data || [],
+    isLoading,
+    error,
+    addEntry,
+    removeEntry,
+  };
+}
+
+export function useGrupTintaStats(month: number, year: number) {
+  const key = `grup-tinta-stats-${month}-${year}`;
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? key : null,
+    safeFetcher(() => grupTintaService.getMonthlyStats(month, year))
+  );
+  
+  return {
+    stats: data || [],
+    isLoading,
+    error,
+  };
 }

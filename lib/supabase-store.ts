@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import type { Activity, Expert, VerificationData, AppSettings, Deliverable, GrupTintaEntry, Neconformitate, VerificationNote } from './types';
+import type { Activity, Expert, VerificationData, AppSettings, Deliverable, GrupTintaEntry, Neconformitate, VerificationNote, ActivityCatalog, WorkingGroup, ReportStatus, ConcurrentProject } from './types';
 
 // Supabase client singleton for client-side
 const getSupabase = () => {
@@ -36,6 +36,9 @@ export const expertsService = {
       role: e.role,
       email: e.email || undefined,
       phone: e.phone || undefined,
+      category: e.category || undefined,
+      norma: e.norma || 8,
+      saCodes: e.sa_codes || [],
     }));
   },
 
@@ -54,6 +57,9 @@ export const expertsService = {
       role: data.role,
       email: data.email || undefined,
       phone: data.phone || undefined,
+      category: data.category || undefined,
+      norma: data.norma || 8,
+      saCodes: data.sa_codes || [],
     };
   },
 
@@ -758,4 +764,355 @@ export const calculateWorkingDays = (month: number, year: number): number => {
   }
   
   return workingDays;
+};
+
+// ============================================
+// ACTIVITY CATALOG
+// ============================================
+export const activityCatalogService = {
+  async getAll(): Promise<ActivityCatalog[]> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('activity_catalog')
+      .select('*')
+      .order('sa_code, activity_number');
+    
+    if (error) throw error;
+    return data.map(a => ({
+      id: a.id,
+      category: a.category,
+      saCode: a.sa_code,
+      serviceCategory: a.service_category,
+      activityNumber: a.activity_number,
+      activityName: a.activity_name,
+      description: a.description,
+      objectives: a.objectives,
+      serviceComponent: a.service_component,
+      beneficiaries: a.beneficiaries,
+      expectedResults: a.expected_results,
+      deliverables: a.deliverables,
+      indicators: a.indicators,
+    }));
+  },
+
+  async getBySaCode(saCode: string): Promise<ActivityCatalog[]> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('activity_catalog')
+      .select('*')
+      .eq('sa_code', saCode)
+      .order('activity_number');
+    
+    if (error) throw error;
+    return data.map(a => ({
+      id: a.id,
+      category: a.category,
+      saCode: a.sa_code,
+      serviceCategory: a.service_category,
+      activityNumber: a.activity_number,
+      activityName: a.activity_name,
+      description: a.description,
+      objectives: a.objectives,
+      serviceComponent: a.service_component,
+      beneficiaries: a.beneficiaries,
+      expectedResults: a.expected_results,
+      deliverables: a.deliverables,
+      indicators: a.indicators,
+    }));
+  },
+};
+
+// ============================================
+// WORKING GROUPS
+// ============================================
+export const workingGroupsService = {
+  async getAll(): Promise<WorkingGroup[]> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('working_groups')
+      .select('*')
+      .eq('is_active', true)
+      .order('type, name');
+    
+    if (error) throw error;
+    return data.map(g => ({
+      id: g.id,
+      name: g.name,
+      type: g.type,
+      email: g.email,
+      saCode: g.sa_code,
+      isActive: g.is_active,
+      notes: g.notes,
+    }));
+  },
+
+  async getByType(type: string): Promise<WorkingGroup[]> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('working_groups')
+      .select('*')
+      .eq('type', type)
+      .eq('is_active', true)
+      .order('name');
+    
+    if (error) throw error;
+    return data.map(g => ({
+      id: g.id,
+      name: g.name,
+      type: g.type,
+      email: g.email,
+      saCode: g.sa_code,
+      isActive: g.is_active,
+      notes: g.notes,
+    }));
+  },
+};
+
+// ============================================
+// CONCURRENT PROJECTS
+// ============================================
+export const concurrentProjectsService = {
+  async getByExpert(expertId: string): Promise<ConcurrentProject[]> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('concurrent_projects')
+      .select('*')
+      .eq('expert_id', expertId)
+      .eq('is_active', true)
+      .order('start_date');
+    
+    if (error) throw error;
+    return data.map(p => ({
+      id: p.id,
+      expertId: p.expert_id,
+      projectName: p.project_name,
+      projectCode: p.project_code,
+      fundingSource: p.funding_source,
+      dailyHours: p.daily_hours,
+      startDate: p.start_date,
+      endDate: p.end_date,
+      isActive: p.is_active,
+      notes: p.notes,
+    }));
+  },
+
+  async create(project: Omit<ConcurrentProject, 'id'>): Promise<ConcurrentProject> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('concurrent_projects')
+      .insert({
+        expert_id: project.expertId,
+        project_name: project.projectName,
+        project_code: project.projectCode,
+        funding_source: project.fundingSource,
+        daily_hours: project.dailyHours,
+        start_date: project.startDate,
+        end_date: project.endDate,
+        is_active: project.isActive ?? true,
+        notes: project.notes,
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return {
+      id: data.id,
+      expertId: data.expert_id,
+      projectName: data.project_name,
+      projectCode: data.project_code,
+      fundingSource: data.funding_source,
+      dailyHours: data.daily_hours,
+      startDate: data.start_date,
+      endDate: data.end_date,
+      isActive: data.is_active,
+      notes: data.notes,
+    };
+  },
+
+  async delete(id: string): Promise<void> {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('concurrent_projects')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+};
+
+// ============================================
+// REPORT STATUS
+// ============================================
+export const reportStatusService = {
+  async getByExpertAndMonth(expertId: string, month: number, year: number): Promise<ReportStatus | null> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('report_status')
+      .select('*')
+      .eq('expert_id', expertId)
+      .eq('month', month)
+      .eq('year', year)
+      .single();
+    
+    if (error) return null;
+    return {
+      id: data.id,
+      expertId: data.expert_id,
+      year: data.year,
+      month: data.month,
+      status: data.status,
+      sentDate: data.sent_date,
+      approvalDate: data.approval_date,
+      pmNotes: data.pm_notes,
+    };
+  },
+
+  async getAllByMonth(month: number, year: number): Promise<ReportStatus[]> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('report_status')
+      .select('*')
+      .eq('month', month)
+      .eq('year', year);
+    
+    if (error) throw error;
+    return data.map(r => ({
+      id: r.id,
+      expertId: r.expert_id,
+      year: r.year,
+      month: r.month,
+      status: r.status,
+      sentDate: r.sent_date,
+      approvalDate: r.approval_date,
+      pmNotes: r.pm_notes,
+    }));
+  },
+
+  async upsert(status: Omit<ReportStatus, 'id'>): Promise<ReportStatus> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('report_status')
+      .upsert({
+        expert_id: status.expertId,
+        year: status.year,
+        month: status.month,
+        status: status.status,
+        sent_date: status.sentDate,
+        approval_date: status.approvalDate,
+        pm_notes: status.pmNotes,
+      }, {
+        onConflict: 'expert_id,year,month',
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return {
+      id: data.id,
+      expertId: data.expert_id,
+      year: data.year,
+      month: data.month,
+      status: data.status,
+      sentDate: data.sent_date,
+      approvalDate: data.approval_date,
+      pmNotes: data.pm_notes,
+    };
+  },
+};
+
+// ============================================
+// GRUP TINTA (enhanced)
+// ============================================
+export const grupTintaService = {
+  async getByExpertAndMonth(expertId: string, month: number, year: number): Promise<GrupTintaEntry[]> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('grup_tinta')
+      .select('*')
+      .eq('expert_id', expertId)
+      .eq('month', month)
+      .eq('year', year)
+      .order('date');
+    
+    if (error) throw error;
+    return data.map(g => ({
+      id: g.id,
+      expertId: g.expert_id,
+      activityId: g.activity_id,
+      date: g.date,
+      type: g.activity_type,
+      organizations: g.organizations || [],
+      participants: g.participants_count,
+      notes: g.notes,
+      month: g.month,
+      year: g.year,
+    }));
+  },
+
+  async create(entry: Omit<GrupTintaEntry, 'id'>): Promise<GrupTintaEntry> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('grup_tinta')
+      .insert({
+        expert_id: entry.expertId,
+        activity_id: entry.activityId,
+        date: entry.date,
+        activity_type: entry.type,
+        organizations: entry.organizations,
+        participants_count: entry.participants,
+        notes: entry.notes,
+        month: entry.month,
+        year: entry.year,
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return {
+      id: data.id,
+      expertId: data.expert_id,
+      activityId: data.activity_id,
+      date: data.date,
+      type: data.activity_type,
+      organizations: data.organizations || [],
+      participants: data.participants_count,
+      notes: data.notes,
+      month: data.month,
+      year: data.year,
+    };
+  },
+
+  async delete(id: string): Promise<void> {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('grup_tinta')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  async getMonthlyStats(month: number, year: number): Promise<{ expertId: string; totalParticipants: number; sessionsCount: number }[]> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('grup_tinta')
+      .select('expert_id, participants_count')
+      .eq('month', month)
+      .eq('year', year);
+    
+    if (error) throw error;
+    
+    const stats = new Map<string, { totalParticipants: number; sessionsCount: number }>();
+    data.forEach(g => {
+      const existing = stats.get(g.expert_id) || { totalParticipants: 0, sessionsCount: 0 };
+      existing.totalParticipants += g.participants_count;
+      existing.sessionsCount += 1;
+      stats.set(g.expert_id, existing);
+    });
+    
+    return Array.from(stats.entries()).map(([expertId, stat]) => ({
+      expertId,
+      ...stat,
+    }));
+  },
 };

@@ -2,10 +2,17 @@
 
 export interface Expert {
   id: string;
+  userId?: string;
   name: string;
   role: string;
   email?: string;
   phone?: string;
+  category?: 'ap' | 'bh' | 'com' | 'cr' | 'cercetare' | 'gt' | 'gdpr';
+  norma: number; // 2, 4, 6, or 8 hours/day
+  saCodes?: string[]; // Assigned sub-activities (SA1.1, SA2.1, etc.)
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Activity {
@@ -15,10 +22,16 @@ export interface Activity {
   expertName?: string;
   hours: number;
   activityType: string;
+  saCode?: string; // Sub-activity code (SA1.1, SA2.1, etc.)
+  catalogActivityId?: string;
   title: string;
   description?: string;
   deliverables?: Deliverable[];
   location?: string;
+  dayType?: 'lucratoare' | 'weekend' | 'sarbatoare';
+  workingGroupId?: string;
+  status?: 'draft' | 'sent' | 'approved';
+  pmNotes?: string;
   grupTinta?: GrupTintaEntry[];
   createdAt?: string;
   updatedAt?: string;
@@ -37,9 +50,71 @@ export interface Deliverable {
 
 export interface GrupTintaEntry {
   id: string;
-  name: string;
-  cnp?: string;
+  expertId: string;
+  activityId?: string;
   date: string;
+  year: number;
+  month: number;
+  activityType: string;
+  organizations: string[];
+  participantsCount: number;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface ActivityCatalog {
+  id: string;
+  category: string;
+  saCode: string;
+  serviceCategory: string;
+  activityNumber: number;
+  activityName: string;
+  description?: string;
+  objectives?: string;
+  serviceComponent?: string;
+  beneficiaries?: string;
+  expectedResults?: string;
+  deliverables?: string;
+  indicators?: string;
+  createdAt?: string;
+}
+
+export interface WorkingGroup {
+  id: string;
+  name: string;
+  type: 'Task Force' | 'Club' | 'Structura';
+  email?: string;
+  isActive: boolean;
+  saCode?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface ReportStatus {
+  id: string;
+  expertId: string;
+  year: number;
+  month: number;
+  status: 'draft' | 'sent' | 'approved' | 'rejected';
+  sentDate?: string;
+  approvalDate?: string;
+  pmNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ConcurrentProject {
+  id: string;
+  expertId: string;
+  projectName: string;
+  projectCode?: string;
+  fundingSource?: string;
+  dailyHours: number;
+  startDate: string;
+  endDate?: string;
+  isActive: boolean;
+  notes?: string;
+  createdAt?: string;
 }
 
 export interface VerificationData {
@@ -152,7 +227,35 @@ export interface MonthData {
   activities: Activity[];
   totalHours: number;
   workDays: number;
+  maxHours: number; // Based on expert norma
 }
+
+// Working hours calculation result
+export interface WorkingHoursInfo {
+  workingDays: number;
+  holidays: string[];
+  maxHours: number;
+  maxHoursWithNorma: number;
+}
+
+// Sub-activities based on PEO structure
+export type SubActivityCode = 
+  | 'SA1.1' | 'SA1.2' | 'SA1.3'
+  | 'SA2.1' | 'SA2.2'
+  | 'SA3.1' | 'SA3.2' | 'SA3.3'
+  | 'SA4.1';
+
+export const SUB_ACTIVITIES: { code: SubActivityCode; name: string; category: string }[] = [
+  { code: 'SA1.1', name: 'Dezvoltare acord parteneriat', category: 'AP' },
+  { code: 'SA1.2', name: 'Dezvoltare curriculum STEAM', category: 'Curriculum' },
+  { code: 'SA1.3', name: 'Formare formatori STEAM', category: 'Formare' },
+  { code: 'SA2.1', name: 'Cercetare educationala', category: 'Cercetare' },
+  { code: 'SA2.2', name: 'Inovare didactica', category: 'Inovare' },
+  { code: 'SA3.1', name: 'Selectie grup tinta', category: 'GT' },
+  { code: 'SA3.2', name: 'Formare grup tinta', category: 'GT' },
+  { code: 'SA3.3', name: 'Mentorat grup tinta', category: 'GT' },
+  { code: 'SA4.1', name: 'Comunicare si diseminare', category: 'Comunicare' },
+];
 
 export type ActivityType = 
   | 'A4.1' 
@@ -179,10 +282,21 @@ export const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: 'Management', label: 'Management proiect' },
 ];
 
-export const EXPERTS_LIST: Expert[] = [
-  { id: '1', name: 'Expert 1', role: 'Expert metodologic' },
-  { id: '2', name: 'Expert 2', role: 'Expert formare' },
-  { id: '3', name: 'Expert 3', role: 'Expert curriculum' },
-  { id: '4', name: 'Expert 4', role: 'Expert evaluare' },
-  { id: '5', name: 'Expert 5', role: 'Expert diseminare' },
+// Expert categories
+export const EXPERT_CATEGORIES: { value: string; label: string }[] = [
+  { value: 'ap', label: 'Administrare Proiect' },
+  { value: 'bh', label: 'Back Office / HR' },
+  { value: 'com', label: 'Comunicare' },
+  { value: 'cr', label: 'Curriculum' },
+  { value: 'cercetare', label: 'Cercetare' },
+  { value: 'gt', label: 'Grup Tinta' },
+  { value: 'gdpr', label: 'GDPR' },
+];
+
+// Norma options (hours per day)
+export const NORMA_OPTIONS: { value: number; label: string }[] = [
+  { value: 8, label: '8 ore/zi (100%)' },
+  { value: 6, label: '6 ore/zi (75%)' },
+  { value: 4, label: '4 ore/zi (50%)' },
+  { value: 2, label: '2 ore/zi (25%)' },
 ];
