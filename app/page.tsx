@@ -95,7 +95,7 @@ export default function HomePage() {
                 </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Setări Globale</DialogTitle>
+                  <DialogTitle>Setari Globale</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
@@ -108,12 +108,12 @@ export default function HomePage() {
                       placeholder="sk-ant-..."
                     />
                     <p className="text-xs text-muted-foreground">
-                      Cheia API este necesară pentru toate funcțiile AI (generare rapoarte,
+                      Cheia API este necesara pentru toate functiile AI (generare rapoarte,
                       verificare documente, asistent Ramona)
                     </p>
                   </div>
                   <Button onClick={handleSaveSettings} className="w-full">
-                    Salvează
+                    Salveaza
                   </Button>
                 </div>
               </DialogContent>
@@ -128,10 +128,10 @@ export default function HomePage() {
       <section className="py-16 px-4">
         <div className="container mx-auto text-center max-w-3xl">
           <h2 className="text-4xl font-bold text-foreground mb-4 text-balance">
-            Sistem de Raportare și Verificare
+            Sistem de Raportare si Verificare
           </h2>
           <p className="text-xl text-muted-foreground mb-8 text-pretty">
-            Gestionați pontajele, rapoartele de activitate și verificați conformitatea
+            Gestionati pontajele, rapoartele de activitate si verificati conformitatea
             documentelor pentru proiectul PEO 302141
           </p>
 
@@ -159,7 +159,7 @@ export default function HomePage() {
       {/* Features Grid */}
       <section className="py-12 px-4 bg-muted/30">
         <div className="container mx-auto">
-          <h3 className="text-2xl font-bold text-center mb-8">Funcționalități</h3>
+          <h3 className="text-2xl font-bold text-center mb-8">Functionalitati</h3>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Expert Features */}
@@ -170,15 +170,15 @@ export default function HomePage() {
                   Pontaj Calendar
                 </CardTitle>
                 <CardDescription>
-                  Selectați multiple zile și înregistrați activitățile rapid
+                  Selectati multiple zile si inregistrati activitatile rapid
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>- Selecție multiplă de zile</li>
-                  <li>- Urmărire ore pe activitate</li>
-                  <li>- Încărcare livrabile</li>
-                  <li>- Gestiune Grup Țintă</li>
+                  <li>- Selectie multipla de zile</li>
+                  <li>- Urmarire ore pe activitate</li>
+                  <li>- Incarcare livrabile</li>
+                  <li>- Gestiune Grup Tinta</li>
                 </ul>
               </CardContent>
             </Card>
@@ -196,9 +196,9 @@ export default function HomePage() {
               <CardContent>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>- Generare cu Claude AI</li>
-                  <li>- Export în format Word</li>
+                  <li>- Export in format Word</li>
                   <li>- Format conform PEO</li>
-                  <li>- Editare manuală</li>
+                  <li>- Editare manuala</li>
                 </ul>
               </CardContent>
             </Card>
@@ -210,7 +210,7 @@ export default function HomePage() {
                   Verificare Pontaj
                 </CardTitle>
                 <CardDescription>
-                  Încărcare și verificare pontaj Excel
+                  Incarcare si verificare pontaj Excel
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -230,15 +230,15 @@ export default function HomePage() {
                   Comparare Documente
                 </CardTitle>
                 <CardDescription>
-                  Comparare automată pontaj vs raport activitate
+                  Comparare automata pontaj vs raport activitate
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>- Analiză cu AI</li>
-                  <li>- Detectare discrepanțe</li>
+                  <li>- Analiza cu AI</li>
+                  <li>- Detectare discrepante</li>
                   <li>- Verificare titluri livrabile</li>
-                  <li>- Raport neconformități</li>
+                  <li>- Raport neconformitati</li>
                 </ul>
               </CardContent>
             </Card>
@@ -247,18 +247,18 @@ export default function HomePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
-                  Analiză Cross-Expert
+                  Analiza Cross-Expert
                 </CardTitle>
                 <CardDescription>
-                  Detectare suprapuneri între experți
+                  Detectare suprapuneri intre experti
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>- Comparare rapoarte</li>
-                  <li>- Detectare similarități</li>
-                  <li>- Alertă suprapuneri</li>
-                  <li>- Prevenire fraudă</li>
+                  <li>- Detectare similaritati</li>
+                  <li>- Alerta suprapuneri</li>
+                  <li>- Prevenire frauda</li>
                 </ul>
               </CardContent>
             </Card>
@@ -275,10 +275,10 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>- Chat în limba română</li>
-                  <li>- Răspunsuri la întrebări</li>
+                  <li>- Chat in limba romana</li>
+                  <li>- Raspunsuri la intrebari</li>
                   <li>- Sfaturi conformitate</li>
-                  <li>- Asistență proceduri</li>
+                  <li>- Asistenta proceduri</li>
                 </ul>
               </CardContent>
             </Card>
@@ -297,7 +297,7 @@ export default function HomePage() {
                 ) : (
                   <p className="text-4xl font-bold text-primary">{totalActivities}</p>
                 )}
-                <p className="text-sm text-muted-foreground mt-1">Activități înregistrate</p>
+                <p className="text-sm text-muted-foreground mt-1">Activitati inregistrate</p>
               </CardContent>
             </Card>
             <Card>
@@ -307,7 +307,7 @@ export default function HomePage() {
                 ) : (
                   <p className="text-4xl font-bold text-primary">{totalExperts}</p>
                 )}
-                <p className="text-sm text-muted-foreground mt-1">Experți configurați</p>
+                <p className="text-sm text-muted-foreground mt-1">Experti configurati</p>
               </CardContent>
             </Card>
             <Card>
@@ -323,8 +323,8 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t py-6 px-4 bg-card">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>Proiect PEO Raportare - Sistem de gestionare activități și verificare documente</p>
-          <p className="mt-1 text-xs">Date stocate în Supabase</p>
+          <p>Proiect PEO Raportare - Sistem de gestionare activitati si verificare documente</p>
+          <p className="mt-1 text-xs">Date stocate in Supabase</p>
         </div>
       </footer>
     </div>
