@@ -114,7 +114,8 @@ export function titleContains(docTitle: string, declaredTitle: string): boolean 
 
 // Deliverable slot types for structured organization
 export type DeliverableSlotType = 
-  | 'main'           // Main deliverable (studiu, ghid, etc.)
+  | 'livrabil'       // Main deliverable (studiu, ghid, etc.)
+  | 'main'           // Alias for livrabil (backward compatibility)
   | 'raport_preliminar' // Optional preliminary report
   | 'event_mom'      // MOM / Event report
   | 'event_proof'    // Photo / Attendance list
@@ -123,9 +124,14 @@ export type DeliverableSlotType =
 export interface DeliverableSlot {
   id: string;
   slotType: DeliverableSlotType;
-  type: string; // Deliverable type from ALL_DELIVERABLE_TYPES
-  filename: string;
-  rawFilename: string;
+  type?: string; // Deliverable type from ALL_DELIVERABLE_TYPES
+  name?: string; // Display name
+  filename?: string;
+  rawFilename?: string;
+  fileType?: string;
+  fileSize?: number;
+  fileData?: string; // Base64
+  uploadedAt?: string;
   uploaded: boolean;
   isPhoto: boolean;
   docTitle: string | null;
@@ -139,18 +145,23 @@ export interface DeliverableSlot {
     reason: string;
     issues: string[];
   } | null;
-  common: boolean; // If this is a shared deliverable across experts
+  common?: boolean; // If this is a shared deliverable across experts
   isPendingConfirm: boolean;
 }
 
 // Default empty deliverable slot
-export function createDeliverableSlot(slotType: DeliverableSlotType, type: string = ''): DeliverableSlot {
+export function createDeliverableSlot(slotType: DeliverableSlotType, name: string = ''): DeliverableSlot {
   return {
     id: `deliv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     slotType,
-    type,
+    type: '',
+    name,
     filename: '',
     rawFilename: '',
+    fileType: '',
+    fileSize: 0,
+    fileData: undefined,
+    uploadedAt: undefined,
     uploaded: false,
     isPhoto: false,
     docTitle: null,

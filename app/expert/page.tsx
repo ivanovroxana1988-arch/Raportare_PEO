@@ -258,6 +258,9 @@ export default function ExpertDashboard() {
                     selectedDates={selectedDates}
                     expertId={selectedExpertId || ''}
                     expertName={selectedExpert.name}
+                    expert={selectedExpert as import('@/lib/types').Expert}
+                    allExperts={experts}
+                    apiKey={localApiKey || null}
                     onSave={handleSaveActivities}
                     onCancel={() => {
                       setShowForm(false);

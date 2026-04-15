@@ -20,6 +20,7 @@ interface DeliverableItemProps {
   required?: boolean;
   label?: string;
   hint?: string;
+  deliverableOptions?: string[];
 }
 
 export function DeliverableItem({
@@ -33,7 +34,10 @@ export function DeliverableItem({
   required = false,
   label,
   hint,
+  deliverableOptions,
 }: DeliverableItemProps) {
+  // Use provided options or fall back to default
+  const typeOptions = deliverableOptions || ALL_DELIVERABLE_TYPES;
   const fileRef = useRef<HTMLInputElement>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -185,11 +189,11 @@ export function DeliverableItem({
               <SelectValue placeholder="— Tip livrabil —" />
             </SelectTrigger>
             <SelectContent>
-              {ALL_DELIVERABLE_TYPES.map((type) => (
-                <SelectItem key={type} value={type} className="text-xs">
-                  {type}
-                </SelectItem>
-              ))}
+            {typeOptions.map((type) => (
+              <SelectItem key={type} value={type} className="text-xs">
+                {type}
+              </SelectItem>
+            ))}
             </SelectContent>
           </Select>
         )}

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertTriangle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getMonthName, formatDate } from '@/lib/supabase-store';
+import { getWorkingHoursInfo } from '@/lib/working-hours';
 import type { Activity } from '@/lib/types';
 
 interface MultiSelectCalendarProps {
@@ -12,6 +13,7 @@ interface MultiSelectCalendarProps {
   onSelectDates: (dates: string[]) => void;
   activities: Activity[];
   onMonthChange?: (month: number, year: number) => void;
+  expertNorma?: number; // hours per day (4, 6, or 8)
 }
 
 export function MultiSelectCalendar({
@@ -19,6 +21,7 @@ export function MultiSelectCalendar({
   onSelectDates,
   activities,
   onMonthChange,
+  expertNorma = 8,
 }: MultiSelectCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isSelecting, setIsSelecting] = useState(false);
@@ -26,6 +29,18 @@ export function MultiSelectCalendar({
 
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
+  
+  // Get working hours info (holidays, max hours)
+  const workingInfo = useMemo(() => {
+    return getWorkingHoursInfo(year, month, expertNorma);
+  }, [year, month, expertNorma]);
+  
+  // Calculate total hours and remaining
+  const totalHoursMonth = useMemo(() => {
+    return activities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  }, [activities]);
+  
+  const remainingHours = workingInfo.maxHoursWithNorma - totalHoursMonth;
 
   const daysInMonth = useMemo(() => {
     const firstDay = new Date(year, month, 1);
@@ -226,22 +241,41 @@ export function MultiSelectCalendar({
         })}
       </div>
 
-      {/* Selected dates summary */}
-      {selectedDates.length > 0 && (
-        <div className="mt-4 p-3 bg-primary/10 rounded-md">
-          <p className="text-sm font-medium text-foreground">
-            {selectedDates.length} {selectedDates.length === 1 ? 'zi selectată' : 'zile selectate'}
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-1 text-xs"
-            onClick={() => onSelectDates([])}
-          >
-            Deselectează toate
-          </Button>
+      {/* Monthly summary */}
+      <div className="mt-4 space-y-2">
+        {/* Hours progress */}
+        <div className={cn(
+          'p-2 rounded-md text-xs flex items-center gap-2',
+          remainingHours > 0 ? 'bg-blue-50 text-blue-800' :
+          remainingHours < 0 ? 'bg-amber-50 text-amber-800' :
+          'bg-green-50 text-green-800'
+        )}>
+          {remainingHours === 0 && <Check className="h-4 w-4" />}
+          {remainingHours < 0 && <AlertTriangle className="h-4 w-4" />}
+          <span>
+            {totalHoursMonth}h / {workingInfo.maxHoursWithNorma}h
+            {remainingHours > 0 && ` — ${remainingHours}h ramase`}
+            {remainingHours < 0 && ` — depășire ${Math.abs(remainingHours)}h`}
+          </span>
         </div>
-      )}
+
+        {/* Selected dates summary */}
+        {selectedDates.length > 0 && (
+          <div className="p-3 bg-primary/10 rounded-md">
+            <p className="text-sm font-medium text-foreground">
+              {selectedDates.length} {selectedDates.length === 1 ? 'zi selectată' : 'zile selectate'}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-1 text-xs"
+              onClick={() => onSelectDates([])}
+            >
+              Deselectează toate
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
