@@ -51,11 +51,11 @@ export function EventDocsPanel({
 
   const generateReport = async () => {
     if (!apiKey) {
-      setGenErr('API key nedefinit — apasă butonul Setări din header');
+      setGenErr('API key nedefinit - apasa butonul Setari din header');
       return;
     }
     if (genDesc.trim().length < 20) {
-      setGenErr('Descrierea trebuie să aibă minim 20 caractere');
+      setGenErr('Descrierea trebuie sa aiba minim 20 caractere');
       return;
     }
 
@@ -144,10 +144,10 @@ export function EventDocsPanel({
         {/* SLOT 1: Dovada participare (always visible, required) */}
         <div>
           <div className="text-[11px] font-medium text-green-800 mb-1">
-            1. Dovadă participare — obligatorie
+            1. Dovada participare - obligatorie
           </div>
           <div className="text-[10px] text-green-600 mb-2">
-            Încarcă întâi poza sau lista de prezență — va fi inclusă în raportul generat.
+            Incarca intai poza sau lista de prezenta - va fi inclusa in raportul generat.
           </div>
           <DeliverableItem
             deliverable={eventProof || createDeliverableSlot('event_proof', 'Fotografii eveniment')}
@@ -157,8 +157,8 @@ export function EventDocsPanel({
             onUpdate={(patch) => onUpsertSlot('event_proof', 'Fotografii + link eveniment', patch)}
             showSteps={false}
             required={true}
-            label="Fotografie eveniment SAU Listă prezență cu semnături olografe"
-            hint="JPG/PNG sau document scanat cu semnăturile participanților."
+            label="Fotografie eveniment SAU Lista prezenta cu semnaturi olografe"
+            hint="JPG/PNG sau document scanat cu semnaturile participantilor."
           />
         </div>
 
@@ -177,13 +177,13 @@ export function EventDocsPanel({
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="upload" id="upload" />
               <Label htmlFor="upload" className="text-xs text-green-800 cursor-pointer">
-                Am MOM sau Raport eveniment — îl încarc direct
+                Am MOM sau Raport eveniment - il incarc direct
               </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="generate" id="generate" />
               <Label htmlFor="generate" className="text-xs text-green-800 cursor-pointer">
-                Nu am MOM — descriu participarea și aplicația generează raportul
+                Nu am MOM - descriu participarea si aplicatia genereaza raportul
               </Label>
             </div>
           </RadioGroup>
@@ -191,7 +191,7 @@ export function EventDocsPanel({
           {/* Upload direct */}
           {hasMOM && (
             <DeliverableItem
-              deliverable={eventMOM || createDeliverableSlot('event_mom', 'Minute întâlnire / MOM')}
+              deliverable={eventMOM || createDeliverableSlot('event_mom', 'Minute intalnire / MOM')}
               apiKey={apiKey}
               subActivity={subActivity}
               activityTitle={activityTitle}
@@ -199,7 +199,7 @@ export function EventDocsPanel({
               showSteps={false}
               required={true}
               label="MOM / Proces verbal / Raport de eveniment"
-              hint="Document cu data, participanți, agenda, concluzii. MOM: semnături olografe obligatorii."
+              hint="Document cu data, participanti, agenda, concluzii. MOM: semnaturi olografe obligatorii."
             />
           )}
 
@@ -212,13 +212,13 @@ export function EventDocsPanel({
                     Descrie participarea la eveniment
                   </div>
                   <div className="text-[10px] text-green-600 mb-2">
-                    Cine a participat, ce s-a discutat, ce s-a decis, ce acțiuni urmează. Poza de mai sus va fi inclusă în raport.
+                    Cine a participat, ce s-a discutat, ce s-a decis, ce actiuni urmeaza. Poza de mai sus va fi inclusa in raport.
                   </div>
                   <Textarea
                     value={genDesc}
                     onChange={(e) => setGenDesc(e.target.value)}
                     rows={4}
-                    placeholder="Ex: Am participat la atelierul de lucru organizat de CPC pe tema monitorizării legislative regionale. Au fost prezenți 12 reprezentanți ai membrilor din regiunea Sud-Muntenia..."
+                    placeholder="Ex: Am participat la atelierul de lucru organizat de CPC pe tema monitorizarii legislative regionale. Au fost prezenti 12 reprezentanti ai membrilor din regiunea Sud-Muntenia..."
                     className="text-xs mb-2"
                   />
                   <div className="flex items-center gap-2 flex-wrap">
@@ -229,13 +229,13 @@ export function EventDocsPanel({
                       className="text-xs bg-green-600 hover:bg-green-700"
                     >
                       {genLoading && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                      {genLoading ? 'Se generează...' : 'Generează raport'}
+                      {genLoading ? 'Se genereaza...' : 'Genereaza raport'}
                     </Button>
                     {genDesc.trim().length < 20 && genDesc.length > 0 && (
                       <span className="text-[10px] text-slate-500">{genDesc.trim().length}/20 min.</span>
                     )}
                     {!apiKey && (
-                      <span className="text-[10px] text-amber-700">API key nedefinit — apasă ⚙</span>
+                      <span className="text-[10px] text-amber-700">API key nedefinit - apasa ⚙</span>
                     )}
                   </div>
                   {genErr && (
@@ -251,7 +251,7 @@ export function EventDocsPanel({
                 <div className="bg-white rounded-lg p-3 border border-green-500">
                   <div className="flex justify-between items-center mb-3">
                     <div className="text-[11px] font-medium text-green-800">
-                      Previzualizare — verifică și editează dacă e necesar
+                      Previzualizare - verifica si editeaza daca e necesar
                     </div>
                     <Button
                       variant="ghost"
@@ -259,7 +259,7 @@ export function EventDocsPanel({
                       onClick={() => setPreview(null)}
                       className="text-[10px] h-6"
                     >
-                      Regenerează
+                      Regenereaza
                     </Button>
                   </div>
                   <div className="mb-2">
@@ -271,7 +271,7 @@ export function EventDocsPanel({
                     />
                   </div>
                   <div className="mb-3">
-                    <Label className="text-[10px]">Conținut raport — editează direct</Label>
+                    <Label className="text-[10px]">Continut raport - editeaza direct</Label>
                     <Textarea
                       value={previewText}
                       onChange={(e) => setPreviewText(e.target.value)}
@@ -282,15 +282,15 @@ export function EventDocsPanel({
                   <div className="flex gap-2 flex-wrap">
                     <Button onClick={confirmReport} size="sm" className="text-xs bg-green-600 hover:bg-green-700">
                       <Check className="h-3 w-3 mr-1" />
-                      Confirm — descarcă și marchează ca validat
+                      Confirm - descarca si marcheaza ca validat
                     </Button>
                     <Button onClick={downloadDocx} variant="outline" size="sm" className="text-xs border-green-400 text-green-700">
                       <Download className="h-3 w-3 mr-1" />
-                      Descarcă Word
+                      Descarca Word
                     </Button>
                   </div>
                   <div className="text-[10px] text-slate-500 mt-2">
-                    După confirmare, raportul este marcat ca valid — nu mai trebuie reuploaded.
+                    Dupa confirmare, raportul este marcat ca valid - nu mai trebuie reuploaded.
                   </div>
                 </div>
               )}
@@ -324,7 +324,7 @@ export function EventDocsPanel({
                       size="sm"
                       className="text-[10px] h-6 text-green-700"
                     >
-                      Modifică
+                      Modifica
                     </Button>
                   </div>
                 </div>
@@ -339,9 +339,9 @@ export function EventDocsPanel({
         <div className="mt-2 p-2 rounded-lg bg-amber-100 border border-amber-300 flex gap-2 items-start">
           <AlertTriangle className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" />
           <div>
-            <div className="text-xs font-medium text-amber-800">Dată eveniment ≠ dată pontată</div>
+            <div className="text-xs font-medium text-amber-800">Data eveniment != data pontata</div>
             <div className="text-[11px] text-amber-700 mt-0.5">
-              MOM-ul indică data {formatDate(momExtractedDate!)}, dar ai pontat pentru {formatDate(date)}. Verificați dacă activitatea a fost declarată în ziua corectă.
+              MOM-ul indica data {formatDate(momExtractedDate!)}, dar ai pontat pentru {formatDate(date)}. Verificati daca activitatea a fost declarata in ziua corecta.
             </div>
           </div>
         </div>
@@ -353,7 +353,7 @@ export function EventDocsPanel({
       }`}>
         {isComplete 
           ? '✓ Documentele de eveniment sunt complete'
-          : `⚠ Lipsesc: ${[missingEventMOM ? 'MOM/Raport eveniment' : null, missingEventProof ? 'Dovadă participare' : null].filter(Boolean).join(' și ')}`
+          : `⚠ Lipsesc: ${[missingEventMOM ? 'MOM/Raport eveniment' : null, missingEventProof ? 'Dovada participare' : null].filter(Boolean).join(' si ')}`
         }
       </div>
     </div>
