@@ -64,16 +64,12 @@ export default function ExpertDashboard() {
   // Set expert based on logged in user's email
   useEffect(() => {
     if (experts.length > 0 && userEmail && !selectedExpertId) {
-      console.log('[v0] User email:', userEmail);
-      console.log('[v0] Available experts:', experts.map(e => ({ name: e.name, email: e.email })));
       // Find expert by email
       const matchingExpert = experts.find(e => e.email?.toLowerCase() === userEmail.toLowerCase());
-      console.log('[v0] Matching expert:', matchingExpert);
       if (matchingExpert) {
         setSelectedExpertId(matchingExpert.id);
       } else {
         // Fallback to first expert if no match found
-        console.log('[v0] No match found, using first expert');
         setSelectedExpertId(experts[0].id);
       }
     }

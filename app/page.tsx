@@ -26,21 +26,37 @@ import {
 } from '@/components/ui/dialog';
 import { useActivities, useExperts, useApiKey } from '@/hooks/use-supabase-data';
 import { UserMenu } from '@/components/user-menu';
+import { createClient } from '@/lib/supabase/client';
 
 export default function HomePage() {
   const [localApiKey, setLocalApiKey] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // Supabase hooks
   const { activities, isLoading: activitiesLoading } = useActivities();
   const { experts, isLoading: expertsLoading } = useExperts();
   const { apiKey, setApiKey, isLoading: apiKeyLoading } = useApiKey();
 
+  // Get logged in user email
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (apiKey) {
       setLocalApiKey(apiKey);
     }
   }, [apiKey]);
+
+  // Check if current user has PM access
+  const currentExpert = experts.find(e => e.email?.toLowerCase() === userEmail?.toLowerCase());
+  const hasPmAccess = currentExpert?.hasPmAccess || false;
 
   const handleSaveSettings = async () => {
     try {
@@ -127,13 +143,15 @@ export default function HomePage() {
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
-            <Link href="/pm">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                <CheckCircle2 className="h-5 w-5 mr-2" />
-                Dashboard PM
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+            {hasPmAccess && (
+              <Link href="/pm">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                  <CheckCircle2 className="h-5 w-5 mr-2" />
+                  Dashboard PM
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </section>

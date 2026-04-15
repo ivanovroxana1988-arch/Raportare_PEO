@@ -39,6 +39,7 @@ export const expertsService = {
       category: e.category || undefined,
       norma: e.norma || 8,
       saCodes: e.sa_codes || [],
+      hasPmAccess: e.has_pm_access || false,
     }));
   },
 
@@ -60,6 +61,7 @@ export const expertsService = {
       category: data.category || undefined,
       norma: data.norma || 8,
       saCodes: data.sa_codes || [],
+      hasPmAccess: data.has_pm_access || false,
     };
   },
 
