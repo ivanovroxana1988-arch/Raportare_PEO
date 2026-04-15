@@ -159,11 +159,14 @@ export default function ExpertDashboard() {
 
   // Auto-open form when dates are selected
   const handleSelectDates = (dates: string[]) => {
+    console.log('[v0] handleSelectDates called with:', dates.length, 'dates');
     setSelectedDates(dates);
     if (dates.length > 0) {
+      console.log('[v0] Opening form, showForm = true');
       setEditingActivity(null);
       setShowForm(true);
     } else {
+      console.log('[v0] Closing form, showForm = false');
       setShowForm(false);
     }
   };

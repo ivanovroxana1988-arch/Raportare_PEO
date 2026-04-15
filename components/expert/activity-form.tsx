@@ -61,6 +61,9 @@ export function ActivityForm({
   // Fetch activity catalog from database
   const { catalog, isLoading: catalogLoading } = useActivityCatalog();
   
+  console.log('[v0] ActivityForm rendering - catalog:', catalog?.length, 'loading:', catalogLoading);
+  console.log('[v0] Expert:', expert?.name, 'saCodes:', expert?.saCodes);
+  
   // Get expert's assigned SA codes (based on their role)
   const expertSaCodes = expert?.saCodes || [];
   
