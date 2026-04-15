@@ -34,7 +34,7 @@ export function DosarExpertModal({
   month,
   year,
   projectCode = 'PEO',
-  projectTitle = 'Program de Educație și Ocupare',
+  projectTitle = 'Program de Educatie si Ocupare',
 }: DosarExpertModalProps) {
   const [activeTab, setActiveTab] = useState('sectiunea-a');
   const [isGeneratingOpis, setIsGeneratingOpis] = useState(false);
@@ -122,7 +122,7 @@ export function DosarExpertModal({
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-slate-900">{stats.totalActivities}</div>
-            <div className="text-[10px] text-slate-500">Activități</div>
+            <div className="text-[10px] text-slate-500">Activitati</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-slate-900">{stats.totalDeliverables}</div>
@@ -132,7 +132,7 @@ export function DosarExpertModal({
             <div className={`text-lg font-bold ${stats.openIssues > 0 ? 'text-red-600' : 'text-green-600'}`}>
               {stats.openIssues}
             </div>
-            <div className="text-[10px] text-slate-500">Neconformități</div>
+            <div className="text-[10px] text-slate-500">Neconformitati</div>
           </div>
         </div>
 
@@ -140,11 +140,11 @@ export function DosarExpertModal({
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="sectiunea-a" className="text-xs">
               <FileText className="h-3 w-3 mr-1" />
-              Secțiunea A - Activități
+              Sectiunea A - Activitati
             </TabsTrigger>
             <TabsTrigger value="sectiunea-b" className="text-xs">
               <Building2 className="h-3 w-3 mr-1" />
-              Secțiunea B - Documente
+              Sectiunea B - Documente
             </TabsTrigger>
           </TabsList>
 
@@ -154,12 +154,12 @@ export function DosarExpertModal({
               {/* Activities by Type */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Activități per Sub-Activitate</CardTitle>
+                  <CardTitle className="text-sm">Activitati per Sub-Activitate</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {activitiesByType.length === 0 ? (
                     <div className="text-center py-6 text-xs text-slate-400">
-                      Nicio activitate înregistrată
+                      Nicio activitate inregistrata
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -168,7 +168,7 @@ export function DosarExpertModal({
                           <div className="flex justify-between items-center mb-2">
                             <Badge variant="outline" className="text-xs">{type}</Badge>
                             <span className="text-xs text-slate-500">
-                              {acts.length} activități · {acts.reduce((s, a) => s + (a.hours || 0), 0)}h
+                              {acts.length} activitati · {acts.reduce((s, a) => s + (a.hours || 0), 0)}h
                             </span>
                           </div>
                           <div className="space-y-1 pl-3 border-l-2 border-slate-200">
@@ -196,7 +196,7 @@ export function DosarExpertModal({
               {/* Calendar View */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Calendar Activități</CardTitle>
+                  <CardTitle className="text-sm">Calendar Activitati</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-1 flex-wrap">
@@ -230,7 +230,7 @@ export function DosarExpertModal({
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <AlertTriangle className={`h-4 w-4 ${stats.openIssues > 0 ? 'text-red-600' : 'text-green-600'}`} />
-                      Neconformități
+                      Neconformitati
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -279,12 +279,12 @@ export function DosarExpertModal({
                     <div>
                       <div className="text-sm font-medium text-slate-900">Export OPIS</div>
                       <div className="text-xs text-slate-500">
-                        Generează documentul OPIS cu lista livrabilelor
+                        Genereaza documentul OPIS cu lista livrabilelor
                       </div>
                     </div>
                     <Button onClick={handleDownloadOpis} disabled={isGeneratingOpis} size="sm">
                       <Download className="h-4 w-4 mr-2" />
-                      {isGeneratingOpis ? 'Se generează...' : 'Descarcă OPIS'}
+                      {isGeneratingOpis ? 'Se genereaza...' : 'Descarca OPIS'}
                     </Button>
                   </div>
                 </CardContent>
@@ -295,13 +295,13 @@ export function DosarExpertModal({
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Lista Livrabile</CardTitle>
                   <CardDescription className="text-xs">
-                    Toate documentele încărcate pentru {monthName} {year}
+                    Toate documentele incarcate pentru {monthName} {year}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {allDeliverables.length === 0 ? (
                     <div className="text-center py-8 text-xs text-slate-400">
-                      Niciun livrabil încărcat
+                      Niciun livrabil incarcat
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -342,9 +342,9 @@ export function DosarExpertModal({
                     {[
                       { label: 'Pontaj semnat', ok: stats.totalHours > 0 },
                       { label: 'Raport activitate', ok: stats.totalActivities > 0 },
-                      { label: 'Livrabile încărcate', ok: stats.totalDeliverables > 0 },
+                      { label: 'Livrabile incarcate', ok: stats.totalDeliverables > 0 },
                       { label: 'OPIS generat', ok: false },
-                      { label: 'Fără neconformități deschise', ok: stats.openIssues === 0 },
+                      { label: 'Fara neconformitati deschise', ok: stats.openIssues === 0 },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-2 text-xs">
                         <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
