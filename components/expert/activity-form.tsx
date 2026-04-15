@@ -157,6 +157,7 @@ export function ActivityForm({
   }, [activityTitle, saCode, filteredCatalog]);
   
   // Get deliverable options for expert category
+  const expertCategory = expert?.category || 'ap';
   const deliverableOptions = useMemo(() => {
     return getDeliverableOptions(expertCategory);
   }, [expertCategory]);
