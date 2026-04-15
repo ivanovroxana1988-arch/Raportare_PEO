@@ -25,6 +25,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useActivities, useExperts, useApiKey } from '@/hooks/use-supabase-data';
+import { UserMenu } from '@/components/user-menu';
 
 export default function HomePage() {
   const [localApiKey, setLocalApiKey] = useState('');
@@ -69,12 +70,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center gap-2">
+              <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Setări Globale</DialogTitle>
@@ -99,7 +101,9 @@ export default function HomePage() {
                   </Button>
                 </div>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+              <UserMenu />
+            </div>
           </div>
         </div>
       </header>

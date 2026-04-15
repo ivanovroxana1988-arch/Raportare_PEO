@@ -29,6 +29,7 @@ import { ReportGenerator } from '@/components/expert/report-generator';
 import { getMonthName } from '@/lib/supabase-store';
 import { useExperts, useActivitiesByMonth, useActivityMutations, useApiKey } from '@/hooks/use-supabase-data';
 import type { Activity, Expert } from '@/lib/types';
+import { UserMenu } from '@/components/user-menu';
 
 export default function ExpertDashboard() {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
@@ -214,6 +215,8 @@ export default function ExpertDashboard() {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              <UserMenu />
             </div>
           </div>
         </div>

@@ -47,6 +47,7 @@ import type {
   Neconformitate,
   VerificationNote,
 } from '@/lib/types';
+import { UserMenu } from '@/components/user-menu';
 
 export default function PMDashboard() {
   const [selectedExpertId, setSelectedExpertId] = useState<string | null>(null);
@@ -315,6 +316,8 @@ export default function PMDashboard() {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              <UserMenu />
             </div>
           </div>
         </div>
