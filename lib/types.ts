@@ -10,6 +10,7 @@ export interface Expert {
   category?: 'ap' | 'bh' | 'com' | 'cr' | 'cercetare' | 'gt' | 'gdpr';
   norma: number; // 2, 4, 6, or 8 hours/day
   saCodes?: string[]; // Assigned sub-activities (SA1.1, SA2.1, etc.)
+  hasPmAccess?: boolean; // True if expert has access to PM module
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;

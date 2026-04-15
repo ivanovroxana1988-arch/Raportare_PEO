@@ -31,6 +31,7 @@ import { getMonthName } from '@/lib/supabase-store';
 import { useExperts, useActivitiesByMonth, useActivityMutations, useApiKey } from '@/hooks/use-supabase-data';
 import type { Activity, Expert } from '@/lib/types';
 import { UserMenu } from '@/components/user-menu';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ExpertDashboard() {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
@@ -42,6 +43,7 @@ export default function ExpertDashboard() {
   const [localApiKey, setLocalApiKey] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // Supabase hooks
   const { experts, isLoading: expertsLoading } = useExperts();
@@ -49,12 +51,29 @@ export default function ExpertDashboard() {
   const { create: createActivity, createBatch, update: updateActivity, remove: removeActivity } = useActivityMutations();
   const { apiKey, setApiKey, isLoading: apiKeyLoading } = useApiKey();
 
-  // Set default expert when experts load
+  // Get logged in user email
   useEffect(() => {
-    if (experts.length > 0 && !selectedExpertId) {
-      setSelectedExpertId(experts[0].id);
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    });
+  }, []);
+
+  // Set expert based on logged in user's email
+  useEffect(() => {
+    if (experts.length > 0 && userEmail && !selectedExpertId) {
+      // Find expert by email
+      const matchingExpert = experts.find(e => e.email?.toLowerCase() === userEmail.toLowerCase());
+      if (matchingExpert) {
+        setSelectedExpertId(matchingExpert.id);
+      } else {
+        // Fallback to first expert if no match found
+        setSelectedExpertId(experts[0].id);
+      }
     }
-  }, [experts, selectedExpertId]);
+  }, [experts, userEmail, selectedExpertId]);
 
   // Load API key when it changes
   useEffect(() => {
