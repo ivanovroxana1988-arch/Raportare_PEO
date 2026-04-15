@@ -61,18 +61,17 @@ export function ActivityForm({
   // Fetch activity catalog from database
   const { catalog, isLoading: catalogLoading } = useActivityCatalog();
   
-  // Get expert's assigned SA codes and category
+  // Get expert's assigned SA codes (based on their role)
   const expertSaCodes = expert?.saCodes || [];
-  const expertCategory = expert?.category || 'ap';
   
-  // Filter catalog by expert's category and SA codes
+  // Filter catalog by expert's SA codes only (SA codes are role-based, not category-based)
   const filteredCatalog = useMemo(() => {
     if (!catalog || catalog.length === 0) return [];
-    return catalog.filter(item => 
-      item.category === expertCategory && 
-      (expertSaCodes.length === 0 || expertSaCodes.includes(item.saCode))
-    );
-  }, [catalog, expertCategory, expertSaCodes]);
+    // If expert has no SA codes assigned, show nothing (should not happen)
+    if (expertSaCodes.length === 0) return [];
+    // Filter to only activities where the SA code matches expert's assigned SAs
+    return catalog.filter(item => expertSaCodes.includes(item.saCode));
+  }, [catalog, expertSaCodes]);
   
   // Get unique SA codes available for this expert from the catalog
   const availableSaCodes = useMemo(() => {
@@ -398,7 +397,7 @@ export function ActivityForm({
             {/* Sub-activity and Activity */}
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <FieldLabel htmlFor="saCode">Subactivitate ({expert?.category?.toUpperCase() || 'AP'})</FieldLabel>
+                <FieldLabel htmlFor="saCode">Subactivitate (Rol: {expert?.role})</FieldLabel>
                 <Select value={saCode} onValueChange={setSaCode} disabled={catalogLoading}>
                   <SelectTrigger id="saCode">
                     <SelectValue placeholder={catalogLoading ? "Se incarca..." : "Selecteaza SA"} />
@@ -415,7 +414,7 @@ export function ActivityForm({
                 </Select>
                 {availableSaCodes.length === 0 && !catalogLoading && (
                   <p className="text-xs text-amber-600 mt-1">
-                    Nu exista subactivitati in catalog pentru categoria {expertCategory}
+                    Nu exista subactivitati alocate pentru rolul tau. Contacteaza PM.
                   </p>
                 )}
               </Field>
