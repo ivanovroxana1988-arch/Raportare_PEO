@@ -87,7 +87,7 @@ export function PontajTab({ data, onDataChange }: PontajTabProps) {
       onDataChange(rows);
     } catch (err) {
       console.error('Error processing Excel:', err);
-      setError('Eroare la procesarea fișierului Excel. Verificați formatul.');
+      setError('Eroare la procesarea fisierului Excel. Verificati formatul.');
     } finally {
       setIsProcessing(false);
     }
@@ -114,9 +114,9 @@ export function PontajTab({ data, onDataChange }: PontajTabProps) {
       {/* File Upload */}
       <Card>
         <CardHeader>
-          <CardTitle>Încărcare Pontaj Excel</CardTitle>
+          <CardTitle>Incarcare Pontaj Excel</CardTitle>
           <CardDescription>
-            Încărcați fișierul Excel cu pontajul pentru verificare
+            Incarcati fisierul Excel cu pontajul pentru verificare
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -125,7 +125,7 @@ export function PontajTab({ data, onDataChange }: PontajTabProps) {
             multiple={false}
             files={files}
             onFilesChange={setFiles}
-            label="Încarcă pontaj Excel"
+            label="Incarca pontaj Excel"
             description="Format acceptat: .xls, .xlsx"
           />
 
@@ -134,12 +134,12 @@ export function PontajTab({ data, onDataChange }: PontajTabProps) {
               {isProcessing ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Se procesează...
+                  Se proceseaza...
                 </>
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Procesează fișierul
+                  Proceseaza fisierul
                 </>
               )}
             </Button>
@@ -159,14 +159,14 @@ export function PontajTab({ data, onDataChange }: PontajTabProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Date Pontaj ({data.length} înregistrări)</CardTitle>
+                <CardTitle>Date Pontaj ({data.length} inregistrari)</CardTitle>
                 <CardDescription>
                   Total ore: {totalHours} | Verificate: {verifiedCount}/{data.length}
                 </CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={verifyAll}>
                 <Check className="h-4 w-4 mr-1" />
-                Verifică toate
+                Verifica toate
               </Button>
             </div>
           </CardHeader>
@@ -219,7 +219,7 @@ export function PontajTab({ data, onDataChange }: PontajTabProps) {
                             Probleme
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">În așteptare</Badge>
+                          <Badge variant="secondary">In asteptare</Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -236,7 +236,7 @@ export function PontajTab({ data, onDataChange }: PontajTabProps) {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <span className="text-sm">În așteptare: {data.length - verifiedCount - issuesCount}</span>
+                <span className="text-sm">In asteptare: {data.length - verifiedCount - issuesCount}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500" />

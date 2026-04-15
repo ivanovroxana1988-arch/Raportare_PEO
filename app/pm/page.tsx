@@ -197,7 +197,7 @@ export default function PMDashboard() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Se încarcă datele...</p>
+          <p className="text-muted-foreground">Se incarca datele...</p>
         </div>
       </div>
     );
@@ -247,7 +247,7 @@ export default function PMDashboard() {
                 onValueChange={(v) => setSelectedMonth(parseInt(v))}
               >
                 <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Lună" />
+                  <SelectValue placeholder="Luna" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((m) => (
@@ -282,7 +282,7 @@ export default function PMDashboard() {
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                Salvează
+                Salveaza
               </Button>
 
               {/* Settings */}
@@ -294,7 +294,7 @@ export default function PMDashboard() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Setări</DialogTitle>
+                    <DialogTitle>Setari</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -307,11 +307,11 @@ export default function PMDashboard() {
                         placeholder="sk-ant-..."
                       />
                       <p className="text-xs text-muted-foreground">
-                        Necesar pentru funcțiile AI (comparare documente, asistent Ramona)
+                        Necesar pentru functiile AI (comparare documente, asistent Ramona)
                       </p>
                     </div>
                     <Button onClick={handleSaveSettings} className="w-full">
-                      Salvează
+                      Salveaza
                     </Button>
                   </div>
                 </DialogContent>
@@ -346,7 +346,7 @@ export default function PMDashboard() {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Neconformități:</span>
+              <span className="text-muted-foreground">Neconformitati:</span>
               <Badge variant={unresolvedIssues > 0 ? 'destructive' : 'secondary'}>
                 {unresolvedIssues} nerezolvate
               </Badge>
@@ -367,7 +367,7 @@ export default function PMDashboard() {
             <TabsTrigger value="livrabile">Livrabile</TabsTrigger>
             <TabsTrigger value="cross-expert">Cross-Expert</TabsTrigger>
             <TabsTrigger value="neconformitati">
-              Neconformități
+              Neconformitati
               {unresolvedIssues > 0 && (
                 <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
                   {unresolvedIssues}
