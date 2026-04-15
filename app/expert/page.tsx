@@ -26,6 +26,7 @@ import { MultiSelectCalendar } from '@/components/expert/multi-select-calendar';
 import { ActivityForm } from '@/components/expert/activity-form';
 import { ActivitiesTable } from '@/components/expert/activities-table';
 import { ReportGenerator } from '@/components/expert/report-generator';
+import { MonthlyReportExport } from '@/components/expert/monthly-report-export';
 import { getMonthName } from '@/lib/supabase-store';
 import { useExperts, useActivitiesByMonth, useActivityMutations, useApiKey } from '@/hooks/use-supabase-data';
 import type { Activity, Expert } from '@/lib/types';
@@ -234,12 +235,13 @@ export default function ExpertDashboard() {
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Calendar Section */}
               <div className="lg:col-span-1">
-                <MultiSelectCalendar
-                  selectedDates={selectedDates}
-                  onSelectDates={setSelectedDates}
-                  activities={activities}
-                  onMonthChange={handleMonthChange}
-                />
+<MultiSelectCalendar
+                    selectedDates={selectedDates}
+                    onSelectDates={setSelectedDates}
+                    activities={activities}
+                    onMonthChange={handleMonthChange}
+                    expertNorma={selectedExpert.norma || 8}
+                    />
 
                 {selectedDates.length > 0 && !showForm && (
                   <div className="mt-4">
@@ -258,6 +260,9 @@ export default function ExpertDashboard() {
                     selectedDates={selectedDates}
                     expertId={selectedExpertId || ''}
                     expertName={selectedExpert.name}
+                    expert={selectedExpert as import('@/lib/types').Expert}
+                    allExperts={experts}
+                    apiKey={localApiKey || null}
                     onSave={handleSaveActivities}
                     onCancel={() => {
                       setShowForm(false);
@@ -295,12 +300,22 @@ export default function ExpertDashboard() {
           </TabsContent>
 
           <TabsContent value="raport">
-            <ReportGenerator
-              activities={activities}
-              month={currentMonth}
-              year={currentYear}
-              expertName={selectedExpert.name}
-            />
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <MonthlyReportExport
+                  expert={selectedExpert as Expert}
+                  activities={activities}
+                  month={currentMonth}
+                  year={currentYear}
+                />
+              </div>
+              <ReportGenerator
+                activities={activities}
+                month={currentMonth}
+                year={currentYear}
+                expertName={selectedExpert.name}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </main>

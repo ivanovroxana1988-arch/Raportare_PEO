@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Upload, X, FileText, Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Upload, X, FileText, Loader2, Users, Plus, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -16,73 +18,195 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field';
 import { generateId, formatDateRo } from '@/lib/supabase-store';
-import type { Activity, Deliverable, GrupTintaEntry, ActivityType } from '@/lib/types';
-import { ACTIVITY_TYPES } from '@/lib/types';
+import { EventDocsPanel } from './event-docs-panel';
+import { DeliverableItem } from './deliverable-item';
+import { createDeliverableSlot, type DeliverableSlot } from '@/lib/deliverable-types';
+import { 
+  ACTS, 
+  DELIVS, 
+  EXCEPTIONS, 
+  isEventActivity, 
+  isExceptionActivity,
+  getActivityOptions,
+  getDeliverableOptions 
+} from '@/lib/peo-constants';
+import type { Activity, Deliverable, GrupTintaEntry, Expert } from '@/lib/types';
 
 interface ActivityFormProps {
   selectedDates: string[];
   expertId: string;
   expertName: string;
+  expert?: Expert;
+  allExperts?: Expert[];
   onSave: (activities: Activity[]) => void;
   onCancel: () => void;
   initialActivity?: Activity;
   isSaving?: boolean;
+  apiKey?: string | null;
 }
 
 export function ActivityForm({
   selectedDates,
   expertId,
   expertName,
+  expert,
+  allExperts = [],
   onSave,
   onCancel,
   initialActivity,
   isSaving = false,
+  apiKey = null,
 }: ActivityFormProps) {
+  // Get expert's assigned SA codes
+  const expertSaCodes = expert?.saCodes || ['SA3.2', 'SA3.4', 'SA3.5'];
+  const expertCategory = expert?.category || 'ap';
+  
   const [hours, setHours] = useState(initialActivity?.hours?.toString() || '8');
-  const [activityType, setActivityType] = useState<ActivityType>(
-    (initialActivity?.activityType as ActivityType) || 'A4.1'
+  const [saCode, setSaCode] = useState(initialActivity?.saCode || expertSaCodes[0] || 'SA3.2');
+  const [activityTitle, setActivityTitle] = useState(initialActivity?.activityType || '');
+  const [dayType, setDayType] = useState<'lucratoare' | 'CO' | 'CM'>(
+    (initialActivity?.dayType as 'lucratoare' | 'CO' | 'CM') || 'lucratoare'
   );
-  const [title, setTitle] = useState(initialActivity?.title || '');
   const [description, setDescription] = useState(initialActivity?.description || '');
   const [location, setLocation] = useState(initialActivity?.location || 'Birou');
-  const [deliverables, setDeliverables] = useState<Deliverable[]>(
-    initialActivity?.deliverables || []
+  
+  // Deliverables state with slots
+  const [deliverables, setDeliverables] = useState<DeliverableSlot[]>(
+    initialActivity?.deliverables?.map(d => ({
+      id: d.id,
+      slotType: 'livrabil' as const,
+      name: d.fileName,
+      filename: d.fileName,
+      fileType: d.fileType,
+      fileSize: d.fileSize,
+      fileData: d.fileData,
+      uploadedAt: d.uploadedAt,
+      uploaded: true,
+      isPhoto: d.fileType?.startsWith('image/') || false,
+      declaredTitle: '',
+      titleConfirmed: false,
+      stadiu: '',
+      aiCheck: null,
+      docTitle: null,
+      docText: null,
+      titleMatch: null,
+      isPendingConfirm: false,
+    })) || []
   );
+  
+  // Common activity / collaboration
+  const [activityCommon, setActivityCommon] = useState(false);
+  const [collaborators, setCollaborators] = useState<string[]>([]);
+  
+  // Event specific fields
+  const [eventDuration, setEventDuration] = useState<string>('');
+  const [eventExtendedDesc, setEventExtendedDesc] = useState('');
+  
+  // Grup tinta
   const [grupTinta, setGrupTinta] = useState<GrupTintaEntry[]>(initialActivity?.grupTinta || []);
+  
+  // Verification
   const [isVerifyingTitle, setIsVerifyingTitle] = useState(false);
   const [titleVerificationResult, setTitleVerificationResult] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Get available activities for selected SA
+  const availableActivities = useMemo(() => {
+    return ACTS[saCode] || [];
+  }, [saCode]);
+  
+  // Get deliverable options for expert category
+  const deliverableOptions = useMemo(() => {
+    return getDeliverableOptions(expertCategory);
+  }, [expertCategory]);
+  
+  // Check if current activity is exception (no deliverable required)
+  const isException = isExceptionActivity(activityTitle);
+  
+  // Check if current activity is event
+  const isEvent = isEventActivity(activityTitle);
+  
+  // Check if leave day
+  const isLeave = dayType === 'CO' || dayType === 'CM';
+  
+  // Check if common description is needed
+  const needsCommonDesc = activityCommon && (description || '').trim().length < 30;
+  
+  // Check if extended event description is needed
+  const totalHours = parseFloat(hours) || 0;
+  const eventDur = parseFloat(eventDuration) || 0;
+  const needsExtendedDesc = isEvent && eventDur > 0 && totalHours > eventDur && (eventExtendedDesc || '').trim().length < 20;
+
+  // Update activity when SA changes
+  useEffect(() => {
+    if (availableActivities.length > 0 && !availableActivities.includes(activityTitle)) {
+      setActivityTitle('');
+    }
+  }, [saCode, availableActivities, activityTitle]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    const newDeliverables: Deliverable[] = [];
-
     for (const file of Array.from(files)) {
       const reader = new FileReader();
       reader.onload = () => {
-        const deliverable: Deliverable = {
+        const newDeliverable: DeliverableSlot = {
           id: generateId(),
-          activityId: initialActivity?.id || '',
-          fileName: file.name,
+          slotType: 'livrabil',
+          name: file.name,
+          filename: file.name,
           fileType: file.type,
           fileSize: file.size,
-          uploadedAt: new Date().toISOString(),
           fileData: reader.result as string,
+          uploadedAt: new Date().toISOString(),
+          uploaded: true,
+          isPhoto: file.type.startsWith('image/'),
+          declaredTitle: '',
+          titleConfirmed: false,
+          stadiu: '',
+          aiCheck: null,
+          docTitle: null,
+          docText: null,
+          titleMatch: null,
+          isPendingConfirm: false,
         };
-        newDeliverables.push(deliverable);
-        if (newDeliverables.length === files.length) {
-          setDeliverables([...deliverables, ...newDeliverables]);
-        }
+        setDeliverables(prev => [...prev, newDeliverable]);
       };
       reader.readAsDataURL(file);
     }
+    
+    // Clear input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const addDeliverableSlot = (type: 'livrabil' | 'raport_preliminar' | 'justificativ') => {
+    const newSlot = createDeliverableSlot(type, '');
+    setDeliverables(prev => [...prev, newSlot]);
+  };
+
+  const updateDeliverable = (id: string, patch: Partial<DeliverableSlot>) => {
+    setDeliverables(prev => prev.map(d => d.id === id ? { ...d, ...patch } : d));
   };
 
   const removeDeliverable = (id: string) => {
-    setDeliverables(deliverables.filter((d) => d.id !== id));
+    setDeliverables(prev => prev.filter((d) => d.id !== id));
+  };
+  
+  const upsertEventSlot = (slotType: 'event_mom' | 'event_proof', name: string, patch: Partial<DeliverableSlot>) => {
+    const existing = deliverables.find(d => d.slotType === slotType);
+    if (existing) {
+      updateDeliverable(existing.id, patch);
+    } else {
+      const newSlot: DeliverableSlot = {
+        ...createDeliverableSlot(slotType, name),
+        ...patch,
+      };
+      setDeliverables(prev => [...prev, newSlot]);
+    }
   };
 
   const addGrupTintaEntry = () => {
@@ -90,14 +214,18 @@ export function ActivityForm({
       ...grupTinta,
       {
         id: generateId(),
-        name: '',
-        cnp: '',
+        expertId,
         date: selectedDates[0] || new Date().toISOString().split('T')[0],
+        year: new Date().getFullYear(),
+        month: new Date().getMonth(),
+        activityType: activityTitle,
+        organizations: [],
+        participantsCount: 0,
       },
     ]);
   };
 
-  const updateGrupTintaEntry = (id: string, field: keyof GrupTintaEntry, value: string) => {
+  const updateGrupTintaEntry = (id: string, field: keyof GrupTintaEntry, value: string | number | string[]) => {
     setGrupTinta(grupTinta.map((g) => (g.id === id ? { ...g, [field]: value } : g)));
   };
 
@@ -106,7 +234,7 @@ export function ActivityForm({
   };
 
   const verifyTitleWithAI = async () => {
-    if (!title.trim()) return;
+    if (!activityTitle.trim() || !apiKey) return;
 
     setIsVerifyingTitle(true);
     setTitleVerificationResult(null);
@@ -116,15 +244,15 @@ export function ActivityForm({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title,
-          activityType,
+          title: activityTitle,
+          saCode,
           description,
         }),
       });
 
       const data = await response.json();
       setTitleVerificationResult(data.result || data.error);
-    } catch (error) {
+    } catch {
       setTitleVerificationResult('Eroare la verificarea titlului');
     } finally {
       setIsVerifyingTitle(false);
@@ -137,12 +265,22 @@ export function ActivityForm({
       date,
       expertId,
       expertName,
-      hours: parseFloat(hours) || 8,
-      activityType,
-      title,
+      hours: isLeave ? 0 : (parseFloat(hours) || 8),
+      activityType: activityTitle,
+      saCode,
+      title: activityTitle,
       description,
-      deliverables,
+      deliverables: deliverables.map(d => ({
+        id: d.id,
+        activityId: initialActivity?.id || '',
+        fileName: d.filename || d.name,
+        fileType: d.fileType || '',
+        fileSize: d.fileSize || 0,
+        uploadedAt: d.uploadedAt,
+        fileData: d.fileData,
+      })),
       location,
+      dayType,
       grupTinta,
       createdAt: initialActivity?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -156,6 +294,11 @@ export function ActivityForm({
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
+
+  // Filter deliverables by type
+  const mainDeliverables = deliverables.filter(d => !d.slotType || d.slotType === 'livrabil');
+  const prelimDeliverables = deliverables.filter(d => d.slotType === 'raport_preliminar');
+  const justifDeliverables = deliverables.filter(d => d.slotType === 'justificativ');
 
   return (
     <Card>
@@ -172,192 +315,511 @@ export function ActivityForm({
         )}
       </CardHeader>
       <CardContent className="space-y-6">
-        <FieldGroup>
+        {/* Day Type and Hours */}
+        <div className="grid grid-cols-2 gap-4">
           <Field>
-            <FieldLabel htmlFor="hours">Ore lucrate</FieldLabel>
-            <Input
-              id="hours"
-              type="number"
-              min="0.5"
-              max="12"
-              step="0.5"
-              value={hours}
-              onChange={(e) => setHours(e.target.value)}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="activityType">Tip Activitate</FieldLabel>
-            <Select value={activityType} onValueChange={(v) => setActivityType(v as ActivityType)}>
-              <SelectTrigger id="activityType">
-                <SelectValue placeholder="Selectează tipul" />
+            <FieldLabel htmlFor="dayType">Tip zi</FieldLabel>
+            <Select value={dayType} onValueChange={(v) => setDayType(v as typeof dayType)}>
+              <SelectTrigger id="dayType">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ACTIVITY_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="lucratoare">Lucratoare</SelectItem>
+                <SelectItem value="CO">CO — Concediu odihna</SelectItem>
+                <SelectItem value="CM">CM — Concediu medical</SelectItem>
               </SelectContent>
             </Select>
           </Field>
 
-          <Field>
-            <FieldLabel htmlFor="location">Locație</FieldLabel>
-            <Select value={location} onValueChange={setLocation}>
-              <SelectTrigger id="location">
-                <SelectValue placeholder="Selectează locația" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Birou">Birou</SelectItem>
-                <SelectItem value="Teren">Teren</SelectItem>
-                <SelectItem value="Online">Online</SelectItem>
-                <SelectItem value="Școală">Școală</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
+          {!isLeave && (
+            <Field>
+              <FieldLabel htmlFor="hours">Ore lucrate</FieldLabel>
+              <Input
+                id="hours"
+                type="number"
+                min="0.5"
+                max="8"
+                step="0.5"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+              />
+            </Field>
+          )}
+        </div>
 
-          <Field>
-            <div className="flex items-center justify-between">
-              <FieldLabel htmlFor="title">Titlu Activitate</FieldLabel>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={verifyTitleWithAI}
-                disabled={isVerifyingTitle || !title.trim()}
-              >
-                {isVerifyingTitle ? (
-                  <>
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Verificare...
-                  </>
-                ) : (
-                  'Verifică cu AI'
+        {!isLeave && (
+          <>
+            {/* Sub-activity and Activity */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="saCode">Subactivitate</FieldLabel>
+                <Select value={saCode} onValueChange={setSaCode}>
+                  <SelectTrigger id="saCode">
+                    <SelectValue placeholder="Selectează SA" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {expertSaCodes.map((sa) => (
+                      <SelectItem key={sa} value={sa}>{sa}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="location">Locație</FieldLabel>
+                <Select value={location} onValueChange={setLocation}>
+                  <SelectTrigger id="location">
+                    <SelectValue placeholder="Selectează locația" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Birou">Birou</SelectItem>
+                    <SelectItem value="Teren">Teren</SelectItem>
+                    <SelectItem value="Online">Online</SelectItem>
+                    <SelectItem value="Sediu CPC">Sediu CPC</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+
+            {/* Activity from catalog */}
+            <Field>
+              <div className="flex items-center justify-between">
+                <FieldLabel htmlFor="activity">Activitate</FieldLabel>
+                {apiKey && activityTitle && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={verifyTitleWithAI}
+                    disabled={isVerifyingTitle}
+                  >
+                    {isVerifyingTitle ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Verificare...
+                      </>
+                    ) : (
+                      'Verifică cu AI'
+                    )}
+                  </Button>
                 )}
-              </Button>
-            </div>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Titlul activității..."
-            />
-            {titleVerificationResult && (
-              <p className="text-sm text-muted-foreground mt-1 p-2 bg-muted rounded">
-                {titleVerificationResult}
-              </p>
-            )}
-          </Field>
+              </div>
+              <Select value={activityTitle} onValueChange={setActivityTitle}>
+                <SelectTrigger id="activity">
+                  <SelectValue placeholder="— Selecteaza —" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableActivities.map((act) => (
+                    <SelectItem key={act} value={act}>{act}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {titleVerificationResult && (
+                <p className="text-sm text-muted-foreground mt-1 p-2 bg-muted rounded">
+                  {titleVerificationResult}
+                </p>
+              )}
+            </Field>
 
-          <Field>
-            <FieldLabel htmlFor="description">Descriere</FieldLabel>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descrierea detaliată a activității..."
-              rows={4}
-            />
-          </Field>
-        </FieldGroup>
+            {/* Description */}
+            <Field>
+              <FieldLabel htmlFor="description">
+                {isException 
+                  ? 'Descriere (obligatorie — min 15 caractere)' 
+                  : activityCommon 
+                    ? 'Descriere contribuție individuală (obligatorie — min 30 caractere)'
+                    : 'Descriere activitate'
+                }
+              </FieldLabel>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={activityCommon 
+                  ? "Descrie specific ce AI realizat TU în această activitate comună (persoana I, contribuție specifică)..." 
+                  : "Ce anume ai realizat..."}
+                rows={4}
+                className={needsCommonDesc ? 'border-amber-500' : ''}
+              />
+              {isException && (description || '').length < 15 && (
+                <div className="text-xs text-amber-700 mt-1">
+                  {(description || '').length}/15 caractere
+                </div>
+              )}
+              {needsCommonDesc && (
+                <div className="text-xs text-amber-700 mt-1 p-2 bg-amber-50 rounded">
+                  Activitate comună — descriere obligatorie min. 30 caractere ({(description || '').trim().length}/30). 
+                  Specifică contribuția ta individuală.
+                </div>
+              )}
+            </Field>
 
-        {/* Deliverables Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Livrabile</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="h-4 w-4 mr-1" />
-              Încarcă fișiere
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={handleFileUpload}
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
-            />
-          </div>
-
-          {deliverables.length > 0 && (
-            <div className="space-y-2">
-              {deliverables.map((d) => (
-                <div
-                  key={d.id}
-                  className="flex items-center justify-between p-2 bg-muted rounded-md"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm truncate max-w-[200px]">{d.fileName}</span>
-                    <span className="text-xs text-muted-foreground">
-                      ({formatFileSize(d.fileSize)})
+            {/* Event duration (for event activities) */}
+            {isEvent && (
+              <Field>
+                <FieldLabel>Durata evenimentului (ore) — opțional</FieldLabel>
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="number"
+                    min="0.5"
+                    max="8"
+                    step="0.5"
+                    value={eventDuration}
+                    onChange={(e) => setEventDuration(e.target.value)}
+                    placeholder="ex: 2"
+                    className="w-24"
+                  />
+                  {eventDur > 0 && totalHours > eventDur && (
+                    <span className="text-xs text-amber-700">
+                      Ai pontat {totalHours}h dar evenimentul a durat {eventDur}h — explică orele suplimentare
                     </span>
+                  )}
+                  {eventDur > 0 && totalHours <= eventDur && (
+                    <span className="text-xs text-green-700 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      Ore pontate ({totalHours}h) ≤ durata evenimentului ({eventDur}h)
+                    </span>
+                  )}
+                </div>
+                {needsExtendedDesc && (
+                  <div className="mt-2">
+                    <Label className="text-xs text-amber-700">Activități conexe evenimentului — obligatoriu</Label>
+                    <div className="text-xs text-amber-600 mb-2">
+                      Ai pontat mai multe ore decât durata evenimentului. Descrie ce ai realizat în orele suplimentare.
+                    </div>
+                    <Textarea
+                      value={eventExtendedDesc}
+                      onChange={(e) => setEventExtendedDesc(e.target.value)}
+                      rows={3}
+                      placeholder="Ex: 1h pregătire materiale de prezentare înainte de eveniment, 1h redactare minuta și sinteză concluzii după eveniment..."
+                      className="border-amber-500"
+                    />
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeDeliverable(d.id)}
+                )}
+              </Field>
+            )}
+
+            {/* Main Deliverables */}
+            {!isException && (
+              <div className="space-y-4">
+                {/* Livrabile principale */}
+                <div className="bg-slate-50 rounded-lg p-4 border">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Livrabile principale
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Outputurile directe ale activitații — obligatorii
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addDeliverableSlot('livrabil')}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Adaugă livrabil
+                    </Button>
+                  </div>
+
+                  {mainDeliverables.length === 0 && (
+                    <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-md">
+                      Niciun livrabil. Apasă + pentru a adăuga outputul activității.
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {mainDeliverables.map((d) => (
+                      <DeliverableItem
+                        key={d.id}
+                        deliverable={d}
+                        apiKey={apiKey}
+                        subActivity={saCode}
+                        activityTitle={activityTitle}
+                        onUpdate={(patch) => updateDeliverable(d.id, patch)}
+                        onRemove={() => removeDeliverable(d.id)}
+                        deliverableOptions={deliverableOptions}
+                      />
+                    ))}
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
+                  />
+                </div>
+
+                {/* Colaborare */}
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Colaborare
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="activityCommon"
+                        checked={activityCommon}
+                        onCheckedChange={(checked) => setActivityCommon(checked as boolean)}
+                      />
+                      <label
+                        htmlFor="activityCommon"
+                        className="text-sm text-blue-800 cursor-pointer"
+                      >
+                        Activitate desfășurată în comun cu alți experți
+                      </label>
+                    </div>
+
+                    {activityCommon && (
+                      <div>
+                        <Label className="text-xs text-blue-700">Experți implicați în această activitate</Label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {allExperts.filter(ex => ex.id !== expertId).map(ex => (
+                            <label
+                              key={ex.id}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs cursor-pointer border transition-colors ${
+                                collaborators.includes(ex.id)
+                                  ? 'bg-blue-100 border-blue-400 text-blue-800'
+                                  : 'bg-white border-blue-200 text-blue-700'
+                              }`}
+                            >
+                              <Checkbox
+                                checked={collaborators.includes(ex.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setCollaborators([...collaborators, ex.id]);
+                                  } else {
+                                    setCollaborators(collaborators.filter(id => id !== ex.id));
+                                  }
+                                }}
+                                className="h-3 w-3"
+                              />
+                              {ex.name.split(' ')[0]}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Common deliverables */}
+                    {mainDeliverables.length > 0 && activityCommon && (
+                      <div>
+                        <div className="text-xs font-medium text-blue-700 mb-2">
+                          Marchează livrabilele comune
+                        </div>
+                        <div className="text-xs text-blue-600 mb-2">
+                          Un singur expert îl încarcă, ceilalți confirmă.
+                        </div>
+                        <div className="space-y-1">
+                          {mainDeliverables.map(d => (
+                            <label
+                              key={d.id}
+                              className={`flex items-center gap-2 px-3 py-2 rounded text-xs cursor-pointer border ${
+                                d.common ? 'bg-blue-100 border-blue-400' : 'bg-white/60 border-blue-200'
+                              }`}
+                            >
+                              <Checkbox
+                                checked={!!d.common}
+                                onCheckedChange={(checked) => updateDeliverable(d.id, { common: checked as boolean })}
+                                className="h-3 w-3"
+                              />
+                              <span className="flex-1 truncate">
+                                {d.declaredTitle || d.name || d.filename || 'Livrabil fara titlu'}
+                              </span>
+                              {d.common && (
+                                <Badge variant="secondary" className="text-[10px]">comun</Badge>
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Raport preliminar (optional) */}
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="text-sm font-medium text-purple-800 flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Raport preliminar / descriptiv
+                        <Badge variant="outline" className="text-[10px] text-purple-600">opțional</Badge>
+                      </div>
+                      <div className="text-xs text-purple-600">
+                        Context detaliat al activității (ex: raport de aliniere, nota internă)
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addDeliverableSlot('raport_preliminar')}
+                      className="border-purple-300 text-purple-700"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Adaugă raport
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {prelimDeliverables.map((d) => (
+                      <DeliverableItem
+                        key={d.id}
+                        deliverable={d}
+                        apiKey={apiKey}
+                        subActivity={saCode}
+                        activityTitle={activityTitle}
+                        onUpdate={(patch) => updateDeliverable(d.id, patch)}
+                        onRemove={() => removeDeliverable(d.id)}
+                        required={false}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Alte documente justificative (optional) */}
+                <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="text-sm font-medium text-amber-800 flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Alte documente justificative
+                        <Badge variant="outline" className="text-[10px] text-amber-600">opțional</Badge>
+                      </div>
+                      <div className="text-xs text-amber-600">
+                        Agende, invitații, corespondență, documente suport suplimentare
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addDeliverableSlot('justificativ')}
+                      className="border-amber-300 text-amber-700"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Adaugă
+                    </Button>
+                  </div>
+                  {justifDeliverables.length > 0 && (
+                    <div className="space-y-3">
+                      {justifDeliverables.map((d) => (
+                        <DeliverableItem
+                          key={d.id}
+                          deliverable={d}
+                          apiKey={null}
+                          subActivity={saCode}
+                          activityTitle={activityTitle}
+                          onUpdate={(patch) => updateDeliverable(d.id, patch)}
+                          onRemove={() => removeDeliverable(d.id)}
+                          required={false}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Event Documents Panel */}
+                {isEvent && (
+                  <EventDocsPanel
+                    deliverables={deliverables}
+                    subActivity={saCode}
+                    activityTitle={activityTitle}
+                    date={selectedDates[0] || ''}
+                    description={description}
+                    apiKey={apiKey}
+                    onUpdateDeliverable={updateDeliverable}
+                    onUpsertSlot={upsertEventSlot}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Grup Tinta Section (for SA1.1) */}
+            {saCode === 'SA1.1' && (
+              <div className="space-y-3 bg-teal-50 rounded-lg p-4 border border-teal-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-teal-800">Grup Țintă</div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addGrupTintaEntry}
+                    className="border-teal-300 text-teal-700"
                   >
-                    <X className="h-4 w-4" />
+                    <Plus className="h-4 w-4 mr-1" />
+                    Adaugă intrare GT
                   </Button>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Grup Tinta Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Grup Țintă</Label>
-            <Button type="button" variant="outline" size="sm" onClick={addGrupTintaEntry}>
-              Adaugă persoană
-            </Button>
+                {grupTinta.length > 0 && (
+                  <div className="space-y-3">
+                    {grupTinta.map((entry) => (
+                      <div key={entry.id} className="flex items-center gap-2 p-2 bg-white rounded-md border border-teal-200">
+                        <Input
+                          placeholder="Organizații"
+                          value={entry.organizations?.join(', ') || ''}
+                          onChange={(e) => updateGrupTintaEntry(entry.id, 'organizations', e.target.value.split(',').map(s => s.trim()))}
+                          className="flex-1"
+                        />
+                        <Input
+                          placeholder="Nr. participanți"
+                          type="number"
+                          value={entry.participantsCount || ''}
+                          onChange={(e) => updateGrupTintaEntry(entry.id, 'participantsCount', parseInt(e.target.value) || 0)}
+                          className="w-28"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeGrupTintaEntry(entry.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Validation warnings */}
+        {!isLeave && !isException && mainDeliverables.length === 0 && (
+          <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <span className="text-sm text-amber-800">
+              Activitatea necesită cel puțin un livrabil principal.
+            </span>
           </div>
-
-          {grupTinta.length > 0 && (
-            <div className="space-y-3">
-              {grupTinta.map((entry) => (
-                <div key={entry.id} className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                  <Input
-                    placeholder="Nume"
-                    value={entry.name}
-                    onChange={(e) => updateGrupTintaEntry(entry.id, 'name', e.target.value)}
-                    className="flex-1"
-                  />
-                  <Input
-                    placeholder="CNP"
-                    value={entry.cnp}
-                    onChange={(e) => updateGrupTintaEntry(entry.id, 'cnp', e.target.value)}
-                    className="w-36"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeGrupTintaEntry(entry.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button type="button" variant="outline" onClick={onCancel}>
             Anulează
           </Button>
-          <Button type="button" onClick={handleSave} disabled={!title.trim() || isSaving}>
+          <Button 
+            type="button" 
+            onClick={handleSave} 
+            disabled={
+              (!activityTitle.trim() && !isLeave) || 
+              isSaving ||
+              (isException && (description || '').length < 15) ||
+              needsCommonDesc ||
+              needsExtendedDesc
+            }
+          >
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
