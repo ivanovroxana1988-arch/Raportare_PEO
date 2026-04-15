@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MultiSelectCalendar } from '@/components/expert/multi-select-calendar';
+import { CalendarView } from '@/components/expert/calendar-view';
 import { ActivityForm } from '@/components/expert/activity-form';
 import { ActivitiesTable } from '@/components/expert/activities-table';
 import { ReportGenerator } from '@/components/expert/report-generator';
@@ -244,28 +245,31 @@ export default function ExpertDashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        <Tabs defaultValue="pontaj" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="pontaj">Pontaj & Activități</TabsTrigger>
-            <TabsTrigger value="raport">Generare Raport</TabsTrigger>
+        <Tabs defaultValue="activitati" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="activitati">Activitati</TabsTrigger>
+            <TabsTrigger value="calendar">Calendar</TabsTrigger>
+            <TabsTrigger value="gt">Grup Tinta</TabsTrigger>
+            <TabsTrigger value="export">Export RA</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pontaj" className="space-y-6">
+          {/* Tab: Activitati - pentru adaugare/editare activitati */}
+          <TabsContent value="activitati" className="space-y-6">
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Calendar Section */}
               <div className="lg:col-span-1">
-<MultiSelectCalendar
-                    selectedDates={selectedDates}
-                    onSelectDates={setSelectedDates}
-                    activities={activities}
-                    onMonthChange={handleMonthChange}
-                    expertNorma={selectedExpert.norma || 8}
-                    />
+                <MultiSelectCalendar
+                  selectedDates={selectedDates}
+                  onSelectDates={setSelectedDates}
+                  activities={activities}
+                  onMonthChange={handleMonthChange}
+                  expertNorma={selectedExpert.norma || 8}
+                />
 
                 {selectedDates.length > 0 && !showForm && (
                   <div className="mt-4">
                     <Button onClick={handleAddActivity} className="w-full">
-                      Adaugă activitate pentru {selectedDates.length}{' '}
+                      Adauga activitate pentru {selectedDates.length}{' '}
                       {selectedDates.length === 1 ? 'zi' : 'zile'}
                     </Button>
                   </div>
@@ -295,7 +299,7 @@ export default function ExpertDashboard() {
                   <Card>
                     <CardHeader>
                       <CardTitle>
-                        Activități - {selectedExpert.name} - {getMonthName(currentMonth)}{' '}
+                        Activitati - {selectedExpert.name} - {getMonthName(currentMonth)}{' '}
                         {currentYear}
                       </CardTitle>
                     </CardHeader>
@@ -318,7 +322,67 @@ export default function ExpertDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="raport">
+          {/* Tab: Calendar - vizualizare calendar cu statistici si detalii pe zi */}
+          <TabsContent value="calendar" className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <Select
+                  value={`${currentMonth}-${currentYear}`}
+                  onValueChange={(value) => {
+                    const [m, y] = value.split('-').map(Number);
+                    handleMonthChange(m, y);
+                  }}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <SelectItem key={i} value={`${i}-${currentYear}`}>
+                        {getMonthName(i)} {currentYear}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {selectedExpert.name} - Norma: {selectedExpert.norma || 8}h/zi
+              </div>
+            </div>
+            
+            <CalendarView
+              expert={selectedExpert as Expert}
+              activities={activities}
+              month={currentMonth}
+              year={currentYear}
+              onAddForDay={(date) => {
+                setSelectedDates([date]);
+                setShowForm(true);
+              }}
+              onEditActivity={handleEditActivity}
+              onDeleteActivity={handleDeleteActivity}
+            />
+          </TabsContent>
+
+          {/* Tab: Grup Tinta - pentru evidenta GT */}
+          <TabsContent value="gt">
+            <Card>
+              <CardHeader>
+                <CardTitle>Grup Tinta - {getMonthName(currentMonth)} {currentYear}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nicio activitate cu Grup Tinta inregistrata in {getMonthName(currentMonth)} {currentYear}.</p>
+                  <p className="text-sm mt-2">
+                    Expertii pot marca implicarea GT direct in formularul de activitate.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Export RA - generare raport si export */}
+          <TabsContent value="export">
             <div className="space-y-4">
               <div className="flex justify-end">
                 <MonthlyReportExport
