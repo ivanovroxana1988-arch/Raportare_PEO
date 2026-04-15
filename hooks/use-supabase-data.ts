@@ -8,14 +8,26 @@ import {
   neconformitatiService,
   notesService,
   settingsService,
+  isSupabaseAvailable,
 } from '@/lib/supabase-store';
 import type { Activity, Expert, VerificationData, Neconformitate, VerificationNote, AppSettings } from '@/lib/types';
+
+// Safe fetcher that returns null if Supabase is not available
+const safeFetcher = <T>(fetcher: () => Promise<T>) => async (): Promise<T | null> => {
+  if (!isSupabaseAvailable()) {
+    return null;
+  }
+  return fetcher();
+};
 
 // ============================================
 // EXPERTS HOOKS
 // ============================================
 export function useExperts() {
-  const { data, error, isLoading } = useSWR('experts', expertsService.getAll);
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? 'experts' : null,
+    safeFetcher(expertsService.getAll)
+  );
   
   return {
     experts: data || [],
@@ -27,8 +39,8 @@ export function useExperts() {
 
 export function useExpert(id: string | null) {
   const { data, error, isLoading } = useSWR(
-    id ? `expert-${id}` : null,
-    () => expertsService.getById(id!)
+    id && isSupabaseAvailable() ? `expert-${id}` : null,
+    safeFetcher(() => expertsService.getById(id!))
   );
   
   return {
@@ -68,7 +80,10 @@ export function useActivities(expertId?: string) {
     ? () => activitiesService.getByExpert(expertId)
     : activitiesService.getAll;
     
-  const { data, error, isLoading } = useSWR(key, fetcher);
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? key : null,
+    safeFetcher(fetcher)
+  );
   
   return {
     activities: data || [],
@@ -81,8 +96,8 @@ export function useActivities(expertId?: string) {
 export function useActivitiesByMonth(month: number, year: number) {
   const key = `activities-month-${month}-${year}`;
   const { data, error, isLoading } = useSWR(
-    key,
-    () => activitiesService.getByMonth(month, year)
+    isSupabaseAvailable() ? key : null,
+    safeFetcher(() => activitiesService.getByMonth(month, year))
   );
   
   return {
@@ -96,8 +111,8 @@ export function useActivitiesByMonth(month: number, year: number) {
 export function useActivitiesByDateRange(startDate: string, endDate: string) {
   const key = `activities-range-${startDate}-${endDate}`;
   const { data, error, isLoading } = useSWR(
-    key,
-    () => activitiesService.getByDateRange(startDate, endDate)
+    isSupabaseAvailable() ? key : null,
+    safeFetcher(() => activitiesService.getByDateRange(startDate, endDate))
   );
   
   return {
@@ -144,7 +159,10 @@ export function useActivityMutations() {
 // VERIFICATIONS HOOKS
 // ============================================
 export function useVerifications() {
-  const { data, error, isLoading } = useSWR('verifications', verificationsService.getAll);
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? 'verifications' : null,
+    safeFetcher(verificationsService.getAll)
+  );
   
   return {
     verifications: data || [],
@@ -157,8 +175,8 @@ export function useVerifications() {
 export function useVerification(expertId: string | null, month: string | null, year: string | null) {
   const key = expertId && month && year ? `verification-${expertId}-${month}-${year}` : null;
   const { data, error, isLoading } = useSWR(
-    key,
-    () => verificationsService.getByExpertAndMonth(expertId!, month!, year!)
+    key && isSupabaseAvailable() ? key : null,
+    safeFetcher(() => verificationsService.getByExpertAndMonth(expertId!, month!, year!))
   );
   
   return {
@@ -196,8 +214,8 @@ export function useVerificationMutations() {
 export function useNeconformitati(verificationId: string | null) {
   const key = verificationId ? `neconformitati-${verificationId}` : null;
   const { data, error, isLoading } = useSWR(
-    key,
-    () => neconformitatiService.getByVerification(verificationId!)
+    key && isSupabaseAvailable() ? key : null,
+    safeFetcher(() => neconformitatiService.getByVerification(verificationId!))
   );
   
   return {
@@ -234,8 +252,8 @@ export function useNeconformitateMutations() {
 export function useNotes(verificationId: string | null) {
   const key = verificationId ? `notes-${verificationId}` : null;
   const { data, error, isLoading } = useSWR(
-    key,
-    () => notesService.getByVerification(verificationId!)
+    key && isSupabaseAvailable() ? key : null,
+    safeFetcher(() => notesService.getByVerification(verificationId!))
   );
   
   return {
@@ -270,7 +288,10 @@ export function useNoteMutations() {
 // SETTINGS HOOKS
 // ============================================
 export function useSettings() {
-  const { data, error, isLoading } = useSWR('settings', settingsService.get);
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? 'settings' : null,
+    safeFetcher(settingsService.get)
+  );
   
   return {
     settings: data || {
@@ -287,7 +308,10 @@ export function useSettings() {
 }
 
 export function useApiKey() {
-  const { data, error, isLoading } = useSWR('api-key', settingsService.getApiKey);
+  const { data, error, isLoading } = useSWR(
+    isSupabaseAvailable() ? 'api-key' : null,
+    safeFetcher(settingsService.getApiKey)
+  );
   
   const setApiKey = async (apiKey: string) => {
     await settingsService.setApiKey(apiKey);

@@ -27,6 +27,12 @@ function LoginForm() {
 
     const supabase = createClient()
     
+    if (!supabase) {
+      setError('Conexiunea la baza de date nu este disponibila')
+      setIsLoading(false)
+      return
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,

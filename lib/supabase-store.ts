@@ -4,7 +4,18 @@ import { createClient } from '@/lib/supabase/client';
 import type { Activity, Expert, VerificationData, AppSettings, Deliverable, GrupTintaEntry, Neconformitate, VerificationNote } from './types';
 
 // Supabase client singleton for client-side
-const getSupabase = () => createClient();
+const getSupabase = () => {
+  const client = createClient();
+  if (!client) {
+    throw new Error('Supabase client not available - environment variables may be missing');
+  }
+  return client;
+};
+
+// Check if Supabase is available (for build-time safety)
+export const isSupabaseAvailable = () => {
+  return createClient() !== null;
+};
 
 // ============================================
 // EXPERTS

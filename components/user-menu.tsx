@@ -21,9 +21,14 @@ export function UserMenu() {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
+    const supabase = createClient()
+    if (!supabase) {
+      setIsLoading(false)
+      return
+    }
+
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
@@ -37,11 +42,14 @@ export function UserMenu() {
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase.auth])
+  }, [])
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
-    await supabase.auth.signOut()
+    const supabase = createClient()
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
     router.push('/auth/login')
     router.refresh()
   }

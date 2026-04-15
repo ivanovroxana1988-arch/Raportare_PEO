@@ -39,6 +39,12 @@ export default function SignUpPage() {
 
     const supabase = createClient()
     
+    if (!supabase) {
+      setError('Conexiunea la baza de date nu este disponibila')
+      setIsLoading(false)
+      return
+    }
+    
     const { error } = await supabase.auth.signUp({
       email,
       password,
