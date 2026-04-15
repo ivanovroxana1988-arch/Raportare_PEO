@@ -80,6 +80,18 @@ export function ActivityForm({
   const expertNorma = expert?.norma || 8;
   // Default hours = min(norma, 8) - experts usually fill their daily norm
   const defaultHours = Math.min(expertNorma, 8);
+  
+  // Per-day hours state - each day can have different hours
+  const [hoursPerDay, setHoursPerDay] = useState<Record<string, string>>(() => {
+    // Initialize with default hours for each selected date
+    const initial: Record<string, string> = {};
+    selectedDates.forEach(date => {
+      initial[date] = initialActivity?.hours?.toString() || defaultHours.toString();
+    });
+    return initial;
+  });
+  
+  // Legacy single hours for backward compatibility (used when saving)
   const [hours, setHours] = useState(initialActivity?.hours?.toString() || defaultHours.toString());
   const [saCode, setSaCode] = useState(initialActivity?.saCode || '');
   
@@ -89,6 +101,19 @@ export function ActivityForm({
       setSaCode(availableSaCodes[0]);
     }
   }, [saCode, availableSaCodes]);
+  
+  // Update hoursPerDay when selectedDates change (add new dates with default hours)
+  useEffect(() => {
+    setHoursPerDay(prev => {
+      const updated = { ...prev };
+      selectedDates.forEach(date => {
+        if (!updated[date]) {
+          updated[date] = defaultHours.toString();
+        }
+      });
+      return updated;
+    });
+  }, [selectedDates, defaultHours]);
   const [activityTitle, setActivityTitle] = useState(initialActivity?.activityType || '');
   const [dayType, setDayType] = useState<'lucratoare' | 'CO' | 'CM'>(
     (initialActivity?.dayType as 'lucratoare' | 'CO' | 'CM') || 'lucratoare'
@@ -298,31 +323,36 @@ export function ActivityForm({
   };
 
   const handleSave = () => {
-    const activities: Activity[] = selectedDates.map((date) => ({
-      id: initialActivity?.id || generateId(),
-      date,
-      expertId,
-      expertName,
-      hours: isLeave ? 0 : (parseFloat(hours) || 8),
-      activityType: activityTitle,
-      saCode,
-      title: activityTitle,
-      description,
-      deliverables: deliverables.map(d => ({
-        id: d.id,
-        activityId: initialActivity?.id || '',
-        fileName: d.filename || d.name,
-        fileType: d.fileType || '',
-        fileSize: d.fileSize || 0,
-        uploadedAt: d.uploadedAt,
-        fileData: d.fileData,
-      })),
-      location,
-      dayType,
-      grupTinta,
-      createdAt: initialActivity?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
+    const activities: Activity[] = selectedDates.map((date) => {
+      // Get hours for this specific date, fallback to default
+      const dateHours = isLeave ? 0 : (parseFloat(hoursPerDay[date] || defaultHours.toString()) || defaultHours);
+      
+      return {
+        id: initialActivity?.id || generateId(),
+        date,
+        expertId,
+        expertName,
+        hours: dateHours,
+        activityType: activityTitle,
+        saCode,
+        title: activityTitle,
+        description,
+        deliverables: deliverables.map(d => ({
+          id: d.id,
+          activityId: initialActivity?.id || '',
+          fileName: d.filename || d.name,
+          fileType: d.fileType || '',
+          fileSize: d.fileSize || 0,
+          uploadedAt: d.uploadedAt,
+          fileData: d.fileData,
+        })),
+        location,
+        dayType,
+        grupTinta,
+        createdAt: initialActivity?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    });
 
     onSave(activities);
   };
@@ -369,10 +399,13 @@ export function ActivityForm({
             </Select>
           </Field>
 
-          {!isLeave && (
+          {!isLeave && selectedDates.length === 1 && (
             <Field>
               <FieldLabel htmlFor="hours">Ore lucrate (max 8h/zi, norma {expertNorma}h)</FieldLabel>
-              <Select value={hours} onValueChange={setHours}>
+              <Select 
+                value={hoursPerDay[selectedDates[0]] || defaultHours.toString()} 
+                onValueChange={(v) => setHoursPerDay(prev => ({ ...prev, [selectedDates[0]]: v }))}
+              >
                 <SelectTrigger id="hours">
                   <SelectValue placeholder="Selecteaza orele" />
                 </SelectTrigger>
@@ -390,6 +423,43 @@ export function ActivityForm({
             </Field>
           )}
         </div>
+
+        {/* Per-day hours when multiple days selected */}
+        {!isLeave && selectedDates.length > 1 && (
+          <div className="space-y-3">
+            <FieldLabel>Ore pentru fiecare zi (max 8h/zi, norma {expertNorma}h)</FieldLabel>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {selectedDates.sort().map(date => (
+                <div key={date} className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                  <span className="text-xs font-medium min-w-[70px]">
+                    {formatDateRo(date)}
+                  </span>
+                  <Select 
+                    value={hoursPerDay[date] || defaultHours.toString()} 
+                    onValueChange={(v) => setHoursPerDay(prev => ({ ...prev, [date]: v }))}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 16 }, (_, i) => (i + 1) * 0.5)
+                        .filter(h => h <= 8)
+                        .map(h => (
+                          <SelectItem key={h} value={h.toString()}>
+                            {h}h
+                          </SelectItem>
+                        ))
+                      }
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total: {selectedDates.reduce((sum, date) => sum + parseFloat(hoursPerDay[date] || defaultHours.toString()), 0)}h pentru {selectedDates.length} zile
+            </p>
+          </div>
+        )}
 
         {!isLeave && (
           <>
