@@ -24,7 +24,12 @@ export async function updateSession(request: NextRequest) {
             request,
           })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              // Ensure cookies work properly in production
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+            }),
           )
         },
       },
@@ -39,15 +44,7 @@ export async function updateSession(request: NextRequest) {
   // with the Supabase client, your users may be randomly logged out.
   const {
     data: { user },
-    error: userError,
   } = await supabase.auth.getUser()
-
-  console.log('[v0] Middleware check:', {
-    pathname: request.nextUrl.pathname,
-    hasUser: !!user,
-    userEmail: user?.email,
-    error: userError?.message,
-  })
 
   // Protect /expert and /pm routes - require authentication
   const protectedPaths = ['/expert', '/pm']
