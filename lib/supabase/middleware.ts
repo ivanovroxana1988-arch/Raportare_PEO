@@ -39,7 +39,15 @@ export async function updateSession(request: NextRequest) {
   // with the Supabase client, your users may be randomly logged out.
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser()
+
+  console.log('[v0] Middleware check:', {
+    pathname: request.nextUrl.pathname,
+    hasUser: !!user,
+    userEmail: user?.email,
+    error: userError?.message,
+  })
 
   // Protect /expert and /pm routes - require authentication
   const protectedPaths = ['/expert', '/pm']
