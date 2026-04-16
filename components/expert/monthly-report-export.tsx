@@ -31,8 +31,8 @@ export function MonthlyReportExport({ expert, activities, month, year }: Monthly
   const [includeRA, setIncludeRA] = useState(true);
   const [format, setFormat] = useState<'docx' | 'pdf' | 'xlsx'>('docx');
 
-  const workingInfo = getWorkingHoursInfo(year, month, expert.norma || 8);
-  const totalHours = activities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const workingInfo = getWorkingHoursInfo(month, year, expert.norma || 8, activities);
+  const totalHours = workingInfo.totalHours;
 
   const handleExport = async () => {
     setIsGenerating(true);

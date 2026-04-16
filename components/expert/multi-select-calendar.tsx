@@ -30,17 +30,12 @@ export function MultiSelectCalendar({
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
   
-  // Get working hours info (holidays, max hours)
+  // Get working hours info (holidays, max hours, remaining)
   const workingInfo = useMemo(() => {
-    return getWorkingHoursInfo(year, month, expertNorma);
-  }, [year, month, expertNorma]);
+    return getWorkingHoursInfo(month, year, expertNorma, activities);
+  }, [month, year, expertNorma, activities]);
   
-  // Calculate total hours and remaining
-  const totalHoursMonth = useMemo(() => {
-    return activities.reduce((sum, a) => sum + (a.hours || 0), 0);
-  }, [activities]);
-  
-  const remainingHours = workingInfo.maxHoursWithNorma - totalHoursMonth;
+  const remainingHours = workingInfo.remaining;
 
   const daysInMonth = useMemo(() => {
     const firstDay = new Date(year, month, 1);

@@ -238,17 +238,35 @@ export interface WorkingHoursInfo {
   workingDays: number;
   maxHoursFullTime: number;
   maxHoursWithNorma: number;
+  maxHours: number;
+  totalHours: number;
+  remaining: number;
   holidays: Date[];
 }
 
-export function getWorkingHoursInfo(year: number, month: number, norma: number = 8): WorkingHoursInfo {
+interface ActivityWithHours {
+  hours?: number;
+}
+
+export function getWorkingHoursInfo(
+  month: number, 
+  year: number, 
+  norma: number = 8, 
+  activities?: ActivityWithHours[]
+): WorkingHoursInfo {
   const workingDays = getWorkingDaysInMonth(month + 1, year); // month is 0-indexed from calendar
   const holidays = getRomanianHolidays(year).filter(h => h.getMonth() === month);
+  const maxHours = workingDays * norma;
+  const totalHours = activities?.reduce((sum, a) => sum + (a.hours || 0), 0) || 0;
+  const remaining = maxHours - totalHours;
   
   return {
     workingDays,
     maxHoursFullTime: workingDays * 8,
-    maxHoursWithNorma: workingDays * norma,
+    maxHoursWithNorma: maxHours,
+    maxHours,
+    totalHours,
+    remaining,
     holidays,
   };
 }
