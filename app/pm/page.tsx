@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Settings, ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -191,7 +191,6 @@ export default function PMDashboard() {
   }));
 
   const isLoading = expertsLoading || apiKeyLoading;
-  const hasError = !isLoading && experts.length === 0;
 
   if (isLoading) {
     return (
@@ -204,19 +203,22 @@ export default function PMDashboard() {
     );
   }
 
-  if (hasError) {
+  // If no experts found after loading, show a message
+  if (experts.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center p-8">
-          <AlertCircle className="h-12 w-12 text-destructive" />
-          <h2 className="text-xl font-semibold">Nu s-au putut incarca datele</h2>
+          <AlertCircle className="h-12 w-12 text-muted-foreground" />
+          <h2 className="text-xl font-semibold">Nu exista experti configurati</h2>
           <p className="text-muted-foreground max-w-md">
-            Verifica conexiunea la internet si incearca din nou. 
-            Daca problema persista, contacteaza administratorul.
+            Contacteaza administratorul pentru a adauga experti in sistem.
           </p>
-          <Button onClick={() => window.location.reload()}>
-            Reincarca pagina
-          </Button>
+          <Link href="/">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Inapoi acasa
+            </Button>
+          </Link>
         </div>
       </div>
     );
