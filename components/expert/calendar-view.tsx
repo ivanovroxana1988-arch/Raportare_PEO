@@ -157,8 +157,21 @@ export function CalendarView({
 
   return (
     <div className="space-y-4">
+      {/* Hours Info - Always visible */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline" className="bg-blue-50 border-blue-300 text-blue-700 text-sm px-3 py-1">
+          {stats.remaining > 0 ? (
+            <span>&#8505; {stats.remaining}h ramase pana la norma lunara de {stats.maxHours}h</span>
+          ) : stats.remaining === 0 ? (
+            <span>&#10003; Norma lunara de {stats.maxHours}h completata ({stats.totalHours}h pontate)</span>
+          ) : (
+            <span>&#9888; Norma lunara depasita cu {Math.abs(stats.remaining)}h ({stats.totalHours}h / {stats.maxHours}h)</span>
+          )}
+        </Badge>
+      </div>
+
       {/* Warnings */}
-      {(stats.emptyPast > 0 || stats.issueDays > 0 || stats.exceedsDays > 0 || stats.remaining !== 0) && (
+      {(stats.emptyPast > 0 || stats.issueDays > 0 || stats.exceedsDays > 0) && (
         <div className="flex flex-wrap gap-2">
           {stats.emptyPast > 0 && (
             <Badge variant="outline" className="bg-red-50 border-red-300 text-red-700">
@@ -173,16 +186,6 @@ export function CalendarView({
           {stats.exceedsDays > 0 && (
             <Badge variant="outline" className="bg-amber-100 border-amber-400 text-amber-700">
               {stats.exceedsDays} zile cu peste 8h pontate
-            </Badge>
-          )}
-          {stats.remaining > 0 && (
-            <Badge variant="outline" className="bg-blue-50 border-blue-300 text-blue-700">
-              {stats.remaining}h ramase pana la norma lunara de {stats.maxHours}h
-            </Badge>
-          )}
-          {stats.remaining < 0 && (
-            <Badge variant="outline" className="bg-amber-100 border-amber-400 text-amber-700">
-              Norma lunara depasita cu {Math.abs(stats.remaining)}h ({stats.totalHours}h / {stats.maxHours}h)
             </Badge>
           )}
         </div>

@@ -33,7 +33,7 @@ function LoginForm() {
       return
     }
     
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -46,8 +46,9 @@ function LoginForm() {
       return
     }
 
-    router.push(redirectTo)
-    router.refresh()
+    // Use window.location for a full page reload to ensure
+    // the server middleware picks up the new session cookies
+    window.location.href = redirectTo
   }
 
   return (
