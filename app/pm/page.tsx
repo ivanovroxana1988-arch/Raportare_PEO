@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Settings, ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { Settings, ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -191,13 +191,32 @@ export default function PMDashboard() {
   }));
 
   const isLoading = expertsLoading || apiKeyLoading;
+  const hasError = !isLoading && experts.length === 0;
 
-  if (isLoading && experts.length === 0) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Se incarca datele...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center p-8">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <h2 className="text-xl font-semibold">Nu s-au putut incarca datele</h2>
+          <p className="text-muted-foreground max-w-md">
+            Verifica conexiunea la internet si incearca din nou. 
+            Daca problema persista, contacteaza administratorul.
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            Reincarca pagina
+          </Button>
         </div>
       </div>
     );
